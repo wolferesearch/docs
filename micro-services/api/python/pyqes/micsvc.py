@@ -3,6 +3,7 @@ tool functions to facilitate the Microservice API python functionality
 - Connection Class
 '''
 
+import io
 import requests
 import time
 import os
@@ -175,13 +176,18 @@ class EntityService:
     def getdf(self, path):
         content = self.get(path)
         # read the df
-        df = pd.DataFrame([row.split(',') for row in content.split('\n')])
+        # df = pd.DataFrame([row.split(',') for row in content.split('\n')])
         # drop the None value first
-        df.dropna(inplace = True)
+        # df.dropna(inplace = True)
         # trim the column with "
-        df.columns = [col.replace('"', '') for col in df.iloc[0]]
+        # df.columns = [col.replace('"', '') for col in df.iloc[0]]
         # drop the column row
-        df = df.iloc[1:]
+        # df = df.iloc[1:]
+        
+        # Utilize pd.read_csv and set first column as index 
+        # By sliu 03/29/2919
+        df = pd.read_csv(io.StringIO(content), index_col=0)
+
         return df
 
     def wait(self, max_wait_secs = 300, verbose = False):
