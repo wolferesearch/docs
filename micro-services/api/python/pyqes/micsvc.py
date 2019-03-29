@@ -469,7 +469,7 @@ class RiskModel(Base):
             data_dic_dt = self.get_data(dt)
             for key, df in data_dic_dt.items():
                 # save directory
-                out_dir = os.path.join(os.path.curdir, out_dir)
+                # out_dir = os.path.join(os.path.curdir, out_dir)
                 save_dir = os.path.join(out_dir, key.split('/')[0])
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
