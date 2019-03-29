@@ -474,7 +474,7 @@ class RiskModel(Base):
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
 
-                df.to_csv(os.path.join(out_dir, '{}.csv'.format(key)))
+                df.to_csv(os.path.join(out_dir, '{}'.format(key)))
         return True
 
     def new_request(self, universe, template, startDate, endDate, freq):
