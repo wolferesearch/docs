@@ -3,7 +3,6 @@ tool functions to facilitate the Microservice API python functionality
 - Connection Class
 '''
 
-import io
 import requests
 import time
 import os
@@ -91,24 +90,34 @@ class Connection:
         success_checker = lambda job: job.get('STATUS') == 'SUCCESS' and job.get('TYPEID') == type_id
         success_ls = [job for job in self.get_jobs() if success_checker(job)]
         return success_ls
+    
+    def __build_template(self, template):
+        t1 = template['TYPE']
+        if t1 == 'Risk-Model':
+            return RiskModelTemplate(self,template)
+        elif t1 == 'Optimization':
+            return OptimizerTemplate(self,template)
+        
 
     def templates(self):
         # access the list of templates
         template_ls = json.loads(self.get('template'))
         switch_dic = {'Optimization':OptimizerTemplate, 'Risk-Model':RiskModelTemplate}
-        return [switch_dic[template['TYPE']](template) for template in template_ls]
+        return [switch_dic[template['TYPE']](self,template) for template in template_ls]
 
     def risk_templates(self):
         template_ls = json.loads(self.get('template'))
         # filter
         risk_filter = lambda temp: temp['TYPE'] == 'Risk-Model'
-        return [template for template in template_ls if risk_filter(template)]
+        template_ls = [template for template in template_ls if risk_filter(template)]
+        return [RiskModelTemplate(self,template) for template in template_ls]
 
     def optimization_templates(self):
         template_ls = json.loads(self.get('template'))
         # filter
         optimization_filter = lambda temp: temp['TYPE'] == 'Optimization'
-        return [template for template in template_ls if optimization_filter(template)]
+        template_ls = [template for template in template_ls if optimization_filter(template)]
+        return [OptimizerTemplate(self,template) for template in template_ls]
 
     def upload_portfolio(self, id, filename):
         # portfolio argument body
@@ -176,18 +185,13 @@ class EntityService:
     def getdf(self, path):
         content = self.get(path)
         # read the df
-        # df = pd.DataFrame([row.split(',') for row in content.split('\n')])
+        df = pd.DataFrame([row.split(',') for row in content.split('\n')])
         # drop the None value first
-        # df.dropna(inplace = True)
+        df.dropna(inplace = True)
         # trim the column with "
-        # df.columns = [col.replace('"', '') for col in df.iloc[0]]
+        df.columns = [col.replace('"', '') for col in df.iloc[0]]
         # drop the column row
-        # df = df.iloc[1:]
-        
-        # Utilize pd.read_csv and set first column as index 
-        # By sliu 03/29/2919
-        df = pd.read_csv(io.StringIO(content), index_col=0)
-
+        df = df.iloc[1:]
         return df
 
     def wait(self, max_wait_secs = 300, verbose = False):
@@ -231,12 +235,19 @@ class Template:
 
     def save(self, name):
         self.json['name'] = name
-        self.conn.post('template', self.json)
+        self.json['__name__'] = name
+        typeMap = {
+            "Risk-Model": "risk-model",
+            "Optimization" : "optimization"
+        }
+        self.conn.post('template/' + typeMap.get(self.type()), self.json)
+
 
 class OptimizerTemplate(Template):
     ''' Optimization Template inherited from the pyqes Template class'''
     def __init__(self,conn,raw):
-        super(conn,raw)   # parent class
+        Template.__init__(self,conn,raw)
+        #super(conn,raw)   # parent class
 
     # Setter Functions
     def set_target_risk(self, target_risk):
@@ -274,7 +285,7 @@ class OptimizerTemplate(Template):
 class RiskModelTemplate(Template):
     '''Risk Model Template inherited from the pyqes Template class'''
     def __init__(self,conn,raw):
-        super(conn,raw)   # parent class
+        Template.__init__(self,conn,raw)
     def factors(self):
         return self.json['factors']
     def meta(self):
@@ -469,12 +480,12 @@ class RiskModel(Base):
             data_dic_dt = self.get_data(dt)
             for key, df in data_dic_dt.items():
                 # save directory
-                # out_dir = os.path.join(os.path.curdir, out_dir)
+                out_dir = os.path.join(os.path.curdir, out_dir)
                 save_dir = os.path.join(out_dir, key.split('/')[0])
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
 
-                df.to_csv(os.path.join(out_dir, '{}'.format(key)))
+                df.to_csv(os.path.join(out_dir, '{}.csv'.format(key)))
         return True
 
     def new_request(self, universe, template, startDate, endDate, freq):

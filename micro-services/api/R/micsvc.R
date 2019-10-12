@@ -41,7 +41,11 @@ qes.microsvc.Template <- R6Class(
     },
     save = function(name) {
       self$json$`__name__` <- name
-      self$conn$post('template',self$json)
+      t1 <- switch(self$type(),
+             `Risk-Model` = 'risk-model',
+             `Optimization` = 'optimization',
+             stop('Type not supported'))
+      self$conn$post(paste0('template/',t1),self$json)
     }
   )
 )

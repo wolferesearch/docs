@@ -7,19 +7,32 @@
 source('micsvc.R')
 
 # Setup a connection object 
-conn1 <- qes.microsvc.Conn$new(username = '<username here>', password = '<password>')
+conn1 <- qes.microsvc.Conn$new(username = 'hjain', password = 'hjain123')
+conn1 <- qes.microsvc.Conn$new(username = 'limmant', password = 'UM5KBYzX')
+
 
 # Get instance of risk model builder
 risk_model_builder <- conn1$get_risk_model_builder()
 
 # Submit a new risk model builder request
-risk_model_builder$new_request(universe = 'SP500',
-                              template = 'default',
-                              startDate = '2018-01-31',
-                              endDate = '2018-12-31',
-                              freq = '1me')
+risk_model_builder$new_request(universe = 'QES_EUROPE',
+                              template = 'euro-ext',
+                              startDate = '2019-01-01',
+                              endDate = '2019-09-25',
+                              freq = '1d')
 # Wait for it to finish
 risk_model_builder$wait(max_wait_secs = 600)
+
+dates <- risk_model_builder$dates()
+alld <- lapply(dates,risk_model_builder$get_data)
+names(alld) <- dates
+
+xx <- do.call(rbind,
+              lapply(dates,function(dt) {
+                x <- alld[[dt]]
+                ix <- which(endsWith(names(x),'exp'))
+                subset(x[[ix]],ID == '9K6257DOY9')
+              }))
 
 # Download all data to a directory
 risk_model_builder$download_all('QES-Risk-Model-Data')
