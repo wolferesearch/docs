@@ -66,7 +66,10 @@ class Connection:
     def refresh_jobs(self):
         job_response = self.session.get(self.URL +'/job')
         job_ls = json.loads(job_response.text)
-        # convert the timestamp into string format & make the descending order
+        if len(job_ls) == 0:
+            self.jobs = None
+            return None
+           # convert the timestamp into string format & make the descending order
         df_jobs = pd.DataFrame(job_ls)
         df_jobs['STARTTIME'] = df_jobs['STARTTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000))
         df_jobs['ENDTIME'] = df_jobs['ENDTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000) if not dt else dt)
@@ -78,17 +81,22 @@ class Connection:
 
     def failed_jobs(self, type_id):
         '''return list of failed jobs'''
-
+        jobs = self.get_jobs()
+        if jobs is None:
+            return None
         # filter func. to select out failed jobs
         fail_checker = lambda job : job.get('STATUS') == 'ERROR' and job.get('TYPEID') == type_id
-        fail_ls = [job for job in self.get_jobs() if fail_checker(job)]
+        fail_ls = [job for job in jobs if fail_checker(job)]
         return fail_ls
 
     def success_jobs(self, type_id):
         '''return list of successful jobs'''
         # filter func. to select out successful jobs
+        jobs = self.get_jobs()
+        if jobs is None:
+            return None
         success_checker = lambda job: job.get('STATUS') == 'SUCCESS' and job.get('TYPEID') == type_id
-        success_ls = [job for job in self.get_jobs() if success_checker(job)]
+        success_ls = [job for job in jobs if success_checker(job)]
         return success_ls
     
     def __build_template(self, template):
@@ -353,17 +361,22 @@ class Base:
         self.esvc = EntityService(self.conn, self.endPoint, uuid)
     def set_latest(self, k=0):
         self.jobs = self.completed()
+        if self.jobs is None:
+            return(False)
         if len(self.jobs) > k:
             self.set_id(self.jobs[k]['UUID'])
+        return(True)
 
     # Functional Methods
     def check_conn(self):
         if self.conn is None:
             raise ValueError('Please create a connection first using set_conn method.')
+            
     def wait(self, max_wait_secs):
         if self.esvc is None:
             raise ValueError('No Optimization Associated with the class, either set id or create new optimization request')
         return self.esvc.wait(max_wait_secs)
+    
     def submit_new_request(self, req):
         self.esvc = None
         self.data = None
