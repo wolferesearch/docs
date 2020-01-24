@@ -9,6 +9,7 @@ import os
 import datetime
 import pandas as pd
 import json
+import io
 
 TYPE_RISKMODEL = 1
 TYPE_OPTIMIZATION = 2
@@ -192,15 +193,7 @@ class EntityService:
 
     def getdf(self, path):
         content = self.get(path)
-        # read the df
-        df = pd.DataFrame([row.split(',') for row in content.split('\n')])
-        # drop the None value first
-        df.dropna(inplace = True)
-        # trim the column with "
-        df.columns = [col.replace('"', '') for col in df.iloc[0]]
-        # drop the column row
-        df = df.iloc[1:]
-        return df
+        return pd.read_csv(io.StringIO(content), index_col = 0)
 
     def wait(self, max_wait_secs = 300, verbose = False):
         ws = 0  # keep track of the waiting time
@@ -498,7 +491,7 @@ class RiskModel(Base):
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
 
-                df.to_csv(os.path.join(out_dir, '{}.csv'.format(key)))
+                df.to_csv(os.path.join(out_dir, '{}'.format(key)))
         return True
 
     def new_request(self, universe, template, startDate, endDate, freq):

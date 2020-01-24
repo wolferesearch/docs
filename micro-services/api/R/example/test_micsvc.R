@@ -17,8 +17,8 @@ risk_model_builder <- conn1$get_risk_model_builder()
 # Submit a new risk model builder request
 risk_model_builder$new_request(universe = 'QES_EUROPE',
                               template = 'euro-ext',
-                              startDate = '2019-01-01',
-                              endDate = '2019-09-25',
+                              startDate = '2019-10-21',
+                              endDate = '2019-10-24',
                               freq = '1d')
 # Wait for it to finish
 risk_model_builder$wait(max_wait_secs = 600)
