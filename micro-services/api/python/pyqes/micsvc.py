@@ -66,67 +66,45 @@ class Connection:
 
     def refresh_jobs(self):
         job_response = self.session.get(self.URL +'/job')
-        job_ls = json.loads(job_response.text)
-        if len(job_ls) == 0:
-            self.jobs = None
-            return None
-           # convert the timestamp into string format & make the descending order
-        df_jobs = pd.DataFrame(job_ls)
-        df_jobs['STARTTIME'] = df_jobs['STARTTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000))
-        df_jobs['ENDTIME'] = df_jobs['ENDTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000) if not dt else dt)
-        # sort the jobs starting with most recent job
-        df_jobs.sort_values('STARTTIME', ascending = False, inplace = True)
-        # reverse back into list
-        job_ls = list(df_jobs.T.to_dict().values())
-        self.jobs = job_ls
+        self.jobs = pd.read_json(job_response.text)
+        self.jobs['STARTTIME'] = self.jobs['STARTTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000))
+        self.jobs['ENDTIME'] = self.jobs['ENDTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000) if not dt else dt)
+        return True
 
     def failed_jobs(self, type_id):
         '''return list of failed jobs'''
-        jobs = self.get_jobs()
-        if jobs is None:
-            return None
-        # filter func. to select out failed jobs
-        fail_checker = lambda job : job.get('STATUS') == 'ERROR' and job.get('TYPEID') == type_id
-        fail_ls = [job for job in jobs if fail_checker(job)]
-        return fail_ls
+        self.refresh_jobs()
+        return self.jobs[(self.jobs.STATUS == 'FAILED') & (self.jobs.TYPEID == type_id)]
 
     def success_jobs(self, type_id):
         '''return list of successful jobs'''
         # filter func. to select out successful jobs
-        jobs = self.get_jobs()
-        if jobs is None:
-            return None
-        success_checker = lambda job: job.get('STATUS') == 'SUCCESS' and job.get('TYPEID') == type_id
-        success_ls = [job for job in jobs if success_checker(job)]
-        return success_ls
+        self.refresh_jobs()
+        return self.jobs[(self.jobs.STATUS == 'SUCCESS') & (self.jobs.TYPEID == type_id)]
     
-    def __build_template(self, template):
-        t1 = template['TYPE']
-        if t1 == 'Risk-Model':
-            return RiskModelTemplate(self,template)
-        elif t1 == 'Optimization':
-            return OptimizerTemplate(self,template)
+    def get_template(self, name):
+        templates = self.templates()
+        templates = templates[templates.NAME == name]
+        if templates.size == 0:
+            raise Exception('Template ' + name + 'not found')
         
-
+        t1 = templates.TYPE.iloc[0]
+        if t1 == 'Risk-Model':
+            return RiskModelTemplate(self,templates.iloc[0])
+        elif t1 == 'Optimization':
+            return OptimizerTemplate(self,templates.iloc[0])
+        
     def templates(self):
         # access the list of templates
-        template_ls = json.loads(self.get('template'))
-        switch_dic = {'Optimization':OptimizerTemplate, 'Risk-Model':RiskModelTemplate}
-        return [switch_dic[template['TYPE']](self,template) for template in template_ls]
+        return pd.read_json(self.get('template'))
 
     def risk_templates(self):
-        template_ls = json.loads(self.get('template'))
-        # filter
-        risk_filter = lambda temp: temp['TYPE'] == 'Risk-Model'
-        template_ls = [template for template in template_ls if risk_filter(template)]
-        return [RiskModelTemplate(self,template) for template in template_ls]
+        templates = self.templates()
+        return templates[templates.TYPE == 'Risk-Model']
 
     def optimization_templates(self):
-        template_ls = json.loads(self.get('template'))
-        # filter
-        optimization_filter = lambda temp: temp['TYPE'] == 'Optimization'
-        template_ls = [template for template in template_ls if optimization_filter(template)]
-        return [OptimizerTemplate(self,template) for template in template_ls]
+        templates = self.templates()
+        return templates[templates.TYPE == 'Optimization']
 
     def upload_portfolio(self, id, filename):
         # portfolio argument body
@@ -152,23 +130,57 @@ class Catalog:
     '''
     def __init__(self, conn):
         self.conn = conn
+        
+    def __as_df__(self,nm):
+        return pd.read_json(self.conn.get(nm))
 
     def get_universe(self):
         '''return the list of available universe'''
-        return json.loads(self.conn.get('universe'))
+        return self.__as_df__('universe')
+    
     def get_factors(self):
         '''return the list of available factor'''
-        return json.loads(self.conn.get('factor'))
+        return self.__as_df__('factor')
+        
     def get_meta_factors(self):
         '''return the list of available meta factor'''
-        return json.loads(self.conn.get('meta'))
+        return self.__as_df__('meta')
+    
     def get_portfolios(self):
         '''return the list of available '''
-        return json.loads(self.conn.get('portfolio'))
+        return self.__as_df__('portfolio')
+    
     def get_templates(self):
         '''return the list of API function templates'''
-        return json.loads(self.conn.get('template'))
+        return self.__as_df__('template')
 
+    
+class EdgarFiling:
+    
+    def __init__(self, conn, year, month, day):
+        self.conn = conn
+        self.year = '{:04d}'.format(int(year))
+        self.month = '{:02d}'.format(int(month))
+        self.day = '{:02d}'.format(int(day))
+        self.meta = json.loads(self.conn.get('/'.join(['edgar-filing',self.year,self.month,self.day])))
+        
+    def get_filings(self):
+        return self.meta
+    
+    def get_file(self,cik,fiscaldate,filing,file):
+        key = '/'.join(['edgar-filing',self.year,self.month,self.day,cik,fiscaldate,filing,file])
+        return self.conn.session.get(self.conn.URL + '/' + key).content.decode('utf-8')
+    
+    def download_files_by_tickers(self, tickers):
+        for com in self.meta:
+            if not com['TICKER'] in tickers:
+                continue   
+            for f in com['FILE']:
+                txt = self.get_file(cik=com['CIK'], fiscaldate=com['FISCALDATE'], filing=com['FILING'], file=f)
+                with open('_'.join([com['TICKER'],com['FISCALDATE'],com['FILING'],f]),"w") as f1:
+                    f1.write(txt)
+                    
+    
 class EntityService:
     '''
     Entity class to manage for the service
@@ -352,12 +364,12 @@ class Base:
     def set_id(self, uuid):
         self.data = None
         self.esvc = EntityService(self.conn, self.endPoint, uuid)
-    def set_latest(self, k=0):
+    def set_latest(self, k = 0):
         self.jobs = self.completed()
         if self.jobs is None:
             return(False)
         if len(self.jobs) > k:
-            self.set_id(self.jobs[k]['UUID'])
+            self.set_id(self.jobs.iloc[0]['UUID'])
         return(True)
 
     # Functional Methods
