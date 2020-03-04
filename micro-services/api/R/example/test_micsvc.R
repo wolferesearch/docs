@@ -8,7 +8,6 @@ source('micsvc.R')
 
 # Setup a connection object 
 conn1 <- qes.microsvc.Conn$new(username = 'hjain', password = 'hjain123')
-conn1 <- qes.microsvc.Conn$new(username = 'limmant', password = 'UM5KBYzX')
 
 
 # Get instance of risk model builder
