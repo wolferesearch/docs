@@ -163,6 +163,7 @@ class EdgarFiling:
         self.month = '{:02d}'.format(int(month))
         self.day = '{:02d}'.format(int(day))
         self.meta = json.loads(self.conn.get('/'.join(['edgar-filing',self.year,self.month,self.day])))
+        self.info = pd.DataFrame(json.loads(self.conn.get('edgar-filing/sections/')))
         
     def get_filings(self):
         return self.meta
