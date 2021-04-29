@@ -108,10 +108,10 @@ class Connection:
 
     def upload_portfolio(self, id, filename):
         # portfolio argument body
-        body = {'portfolioName':id, 'file': open(filename,'rb')}
-        # post the upload request
-        self.session.post(self.URL + '/portfolio',headers = self.headers,
-                          data = body)
+        files={'file': open(filename,'rb')}
+        data={'portfolioName': 'picton_t1'}
+        return self.session.post(self.URL + '/portfolio', files = files, data = data)
+        
 
     # Functional Method to interact with the inner class
     def get_risk_model_builder(self):
