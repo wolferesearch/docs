@@ -1,2234 +1,1915 @@
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="heading">
 
-<tbody>
+# QES LQuant Python API
 
-<tr bgcolor="#7799ee">
 
-<td valign="bottom">   
-<font color="#ffffff" face="helvetica, arial">   
-<big><big>**LQuant**</big></big></font></td>
+This examples illustrates the working of Python interface to LQuant&reg; data query library created by [Wolfe Research](https://www.wolferesearch.com). The API paralles the R API.
 
-<td align="right" valign="bottom"><font color="#ffffff" face="helvetica, arial">[index](.)  
-[/home/ubuntu/projects/lquantPy/lquantPy/LQuant.py](file:/home/ubuntu/projects/lquantPy/lquantPy/LQuant.py)</font></td>
+LQuant core data query library is written in Java and Analytics library in R. Python API is a thin wrapper on both libraries. Additional resources available to understand the architecture is available in public Github that can be used to cross reference some of the functionality
 
-</tr>
+- [Oveview](https://github.com/wolferesearch/docs/blob/master/wquant.md)
+- [Data Query Engine R API](https://github.com/wolferesearch/docs/blob/master/r-api/wquantR.pdf)
+- [Analytics Library R API](https://github.com/wolferesearch/docs/blob/master/r-api/lqtool.pdf)
 
-</tbody>
 
+## Architecture
+
+Our infrastructure is completed hosted on Amazon Cloud (AWS). We attempt to leverage the greatest and latest of the technologies. Here is the overview of our data pipeline
+
+![Quant Architecture](https://s3.amazonaws.com/lquant-images/QuantDataPipeline.png "Quant Architecture")
+
+
+
+
+
+## lquantPy (Python Package)
+
+`lquantPy` is a python package available on servers hosted by Wolfe Research. The package provides access to the data query API. For Python, we use [`numpy`](http://www.numpy.org/) and [`pandas`](http://pandas.pydata.org/) as the data container. The main file to import for lquantPy is the LQuant. This below code should be executed exactly once per python session. Invoking this code twice would throw an java initialization error. 
+
+
+```python
+# Import the LQuant Python Librar
+from lquantPy import LQuant
+
+# It is recommended to use the naming of variable to be wq in order to be consistent with R API. 
+wq=LQuant.LQuant()
+```
+
+    2017-10-18 12:51:32,052 - lquantPy.LQuant - INFO - Initial LQuant. This may take some time...
+    2017-10-18 12:51:32,053 - lquantPy.LQuant - INFO - Initialized LQuant environment
+    2017-10-18 12:51:32,054 - lquantPy.LQuant - INFO - Initializing LQuant, This will take some time....
+
+
+    Library Path -Djava.library.path=/usr/local/lib/R/site-library/rJava/jri
+
+
+### Data Query API
+
+LQuant Python API has a fluent API to build the data request object and executing it. Here is an example of the API to retrieve for attributes
+
+1. Company Name (COMPANYNAME)
+2. Return on Equity (ROE)
+3. Moving Average 15W-36W (MA_15_36)
+4. EPS 3-month revision (ES_EPS_NTM_R3M)
+5. Close Price (PRCCD)
+6. Cumulative Dividend Cash Flow (CUM_DIV) 
+
+
+```python
+
+# Build Request Object
+req = wq.new_request().start('1995-12-31').to('2017-03-31').\
+    runFor('SP500').at('1me').a('COMPANYNAME').a('ROE').a('MA_15_36').a('ES_EPS_NTM_R3M').a('PRCCD').a('CUM_DIV').a('IN_SP500')
+
+# Execute Query
+data = wq.get_data(req)  
+
+
+```
+
+    2017-10-18 13:47:02,580 - lquantPy.LQuant - INFO - Fetching Data
+
+
+## Data Request
+
+In this example the `SP500` is the universe mnemonic that represent constituents of S&P 500 Index. The data is requested from 31-Dec-1995 to 31-Mar-2017. The `at` parameter specifies the frequency of data, `1me` stands for 1 month-end frequency. It will ensure that data is computed at the end of the month. Other available frequencies are:
+
+#### Available Frequencies 
+
+- `1d`
+
+    Daily Frequency. Number 1 can be replaced with any integer to specify arbitrary frequency, e.g., 43d
+    
+    
+- `1m[e,s]`
+
+    Monthly Frequency. Number 1 can be replaced with any integer to specify arbitrary frequency, e.g., 2m. Note that suffix is optional. If `e` is used, then it would provide month end dates and `s` would provide month start dates. Default behavior without the suffix is to increment month starting from the start date, so if the middle of the month is selected as the start date, all dates will be middle of the month
+    
+    
+- `1w`
+
+    Weekly Frequency. Number 1 can be replaced with any integer to specify arbitrary frequency, e.g., 7w
+    
+    
+- `1q[e,s]`
+
+    Quarterly Frequency. Number 1 can be replaced with any integer to specify arbitrary frequency, e.g., 2q. Note that suffix is optional. If `e` is used, then it would provide quarter end dates and `s` would provide quarter start dates. Default behavior without the suffix is to increment quarter starting from the start date, so if the middle of the quarter is selected as the start date, all dates will be middle of the quarter
+    
+    
+- `1y[e,s]`
+
+    Yearly Frequency. Number 1 can be replaced with any integer to specify arbitrary frequency, e.g., 3y. Note that suffix is optional. If `e` is used, then it would provide year end dates and `s` would provide year start dates. Default behavior without the suffix is to increment year starting from the start date, so if the middle of the year is selected as the start date, all dates will be middle of the month
+
+For list of factors and universes, please see the search functionality at the end of the notebook. 
+ 
+The returned object data is a custom data structure stored in library. There are convenient methods to convert this data to standard objects in python, such as Pandas.
+
+#### Other directives for the request object
+
+- rebalanceTime(timezone,time)
+
+    Uses a specific time within a date as the cutoff date for data. 
+    
+    
+- forDates(dates)
+
+    You can use this to specifiy custom dates array. This should be not used along with start and to directives. 
+    
+    
+- nullWhenMissing()
+
+    Use this directive to return null when an attribute is missing. 
+    
+    
+- globalMode()
+
+    Use this directive to set data source to global. This has implication for universes that consist US and non-US securities. When set in global mode, lquant uses the global data provider (e.g., Capital IQ Premium Financial) as opposed to Compustat. 
+    
+
+- setNoCache(noCache)
+
+    Use this directive to skip the cache. The query will directly go to the database or original source for data. Using this option can significantly slow down the query execution. 
+    
+    
+- batchSize(int size)
+
+    Use this size to control the batch size of data retrieval. The default batch is 5. Increasing batch size increase the memory requirement of Java side. This parameter can potentially be used to improve the performance of data query
+
+
+- inCurrency(currencyIsoCode)
+
+    Use this directive to set a fixed currency for factor evaluation. The default behavior is to use local currency. 
+
+## Meta Data (List of Available Factors)
+
+Client can programmatically get the list of factors available to them. The `wq.get_factors()` command will return a Pandas data frame that can be further used to browse through the factors. For all available factors, please see the [search](http://rstudio2.luoquant.com/julia/user/karora/notebooks/LQuant%20Python%20Example.ipynb#Search-API) part of the notebook. 
+
+
+```python
+# Clients are provided access to a selected set of factors to work with. You can easily access these factors
+#
+
+factors = wq.get_factors()
+```
+
+
+
+
+<div>
+<style>
+    .dataframe thead tr:only-child th {
+        text-align: right;
+    }
+
+    .dataframe thead th {
+        text-align: left;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Mnemonic</th>
+      <th>Expression</th>
+      <th>Function</th>
+      <th>Args</th>
+      <th>Description</th>
+      <th>Unit</th>
+      <th>Is Value</th>
+      <th>Frequency</th>
+      <th>Adjustment Type</th>
+      <th>Fx Adjustment</th>
+      <th>Staleness Threshold</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>OA_GR</td>
+      <td>(AOQ-AOQ_P4)/max(abs(AOQ_P4),0.02)</td>
+      <td></td>
+      <td></td>
+      <td>Growth in other assets [Quality.Capital utiliz...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ES_SALE_NTM_R1M</td>
+      <td>nvl(CIQ_ES_SALE_NTM_R1M,TRE_ES_SALE_NTM_R1M)</td>
+      <td></td>
+      <td></td>
+      <td>NTM revenue revision, 1M [Analyst sentiment.Re...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>EPS_VARIA</td>
+      <td>nvl(CIQ_EPS_VARIA,TRE_EPS_VARIA)</td>
+      <td></td>
+      <td></td>
+      <td>FY1 EPS coefficient of variation [Quality.Stab...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>GR_FY1_SALE</td>
+      <td>nvl(CIQ_GR_FY1_SALE,TRE_GR_FY1_SALE)</td>
+      <td></td>
+      <td></td>
+      <td>FY1 Revenue growth [Growth.Expected growth] --...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>PE_FY1</td>
+      <td>nvl(CIQ_PE_FY1,TRE_PE_FY1)</td>
+      <td></td>
+      <td></td>
+      <td>Price-to-EPS, FY1 Median [SPLT_PRCCD/ES_EPS_FY...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>PE_FY2</td>
+      <td>nvl(CIQ_PE_FY2,TRE_PE_FY2)</td>
+      <td></td>
+      <td></td>
+      <td>Price-to-EPS, FY2 Median [SPLT_PRCCD/ES_EPS_FY...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>TRIX</td>
+      <td>@mgrowth(@mexpavg(@mexpavg(@mexpavg(PRCCD,15d)...</td>
+      <td></td>
+      <td></td>
+      <td>TRIX</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>EBITDA_SUR</td>
+      <td>TRE_EST_EBT_SUP_FY1</td>
+      <td></td>
+      <td></td>
+      <td>EBITDA surprise (vs consensus) [Analyst sentim...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>ES_EPS_FY1_D1M</td>
+      <td>nvl((CIQ_EST_REV_EPS_UP_1M_FY1-CIQ_EST_REV_EPS...</td>
+      <td></td>
+      <td></td>
+      <td>FY1 EPS diffusion (up/down ratio), 1M [Analyst...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>GR_INTR_CFPS</td>
+      <td>OANCFQ_G12M</td>
+      <td></td>
+      <td></td>
+      <td>Historical YoY interim CFPS growth [Growth.His...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>PSALE</td>
+      <td>PRCCD*CSHOQ/max(SALEQ_LTM,0.05)</td>
+      <td></td>
+      <td></td>
+      <td>Price-to-sales [Value.Revenue] -- [SPLT_PRCCD/...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>P_TREND</td>
+      <td>@mslope(log(PRCCD),1y)</td>
+      <td></td>
+      <td></td>
+      <td>Price trend, 12M</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>ALTMAN1968</td>
+      <td>1.2*(WCAPQ/max(ATQ,0.02))+1.4*(__REQ/max(ATQ,0...</td>
+      <td></td>
+      <td></td>
+      <td>Altman's z-score [1968] [Quality.Financial lev...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>DIVYLD_TRL</td>
+      <td>100*nvl(DIV_LTM,0.0)/max(PRCCD,0.05)</td>
+      <td></td>
+      <td></td>
+      <td>Trailing dividend yield [Value.Dividend] -- [1...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>ES_TP_D1M</td>
+      <td>nvl((CIQ_REV_PTG_AVG_UP_1M_FY1-CIQ_REV_PTG_AVG...</td>
+      <td></td>
+      <td></td>
+      <td>Target price diffusion (up/down ratio), 1M [An...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>ES_CFPS_NTM_R1M</td>
+      <td>nvl(CIQ_ES_CFPS_NTM_R1M,TRE_ES_CFPS_NTM_R1M)</td>
+      <td></td>
+      <td></td>
+      <td>NTM CFPS revision, 1M [Analyst sentiment.CFPS]...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>ES_EBITDA_FY1_R3M</td>
+      <td>nvl(CIQ_ES_EBITDA_FY1_R3M,TRE_ES_EBITDA_FY1_R3M)</td>
+      <td></td>
+      <td></td>
+      <td>FY1 EBITDA revision, 3M [Defined in the [Estim...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>ES_DPS_FY1_D1M</td>
+      <td>nvl((CIQ_EST_REV_DPS_UP_1M_FY1-CIQ_EST_REV_DPS...</td>
+      <td></td>
+      <td></td>
+      <td>FY1 DPS diffusion (up/down ratio), 1M [Analyst...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>SALE_SUR</td>
+      <td>TRE_EST_SAL_SUP_FY1</td>
+      <td></td>
+      <td></td>
+      <td>Revenue surprise (vs consensus) [Analyst senti...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>INVENT_TO</td>
+      <td>COGSQ_LTM/max((INVTQ_P0+INVTQ_P4)/2,0.02)</td>
+      <td></td>
+      <td></td>
+      <td>Inventory turnover [Quality.Financial leverage...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>DEBT_EQUITY</td>
+      <td>(DLCQ+DLTTQ)/max(SEQQ,0.02)</td>
+      <td></td>
+      <td></td>
+      <td>Total debt/total equity [Quality.Financial lev...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>PPE_GR</td>
+      <td>(PPENTQ-PPENTQ_P4)/max(abs(PPENTQ_P4),0.02)</td>
+      <td></td>
+      <td></td>
+      <td>Growth in property, plan, and equipment [Quali...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>DIVYLD_FY1</td>
+      <td>nvl(CIQ_DIVYLD_FY1,TRE_DIVYLD_FY1)</td>
+      <td></td>
+      <td></td>
+      <td>Dividend yield, FY1[100*ES_DPS_FY1_ME/SPLT_PRC...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>PRCCD</td>
+      <td>PRCCD</td>
+      <td></td>
+      <td></td>
+      <td>Price Close - Daily</td>
+      <td>PER_SHARE</td>
+      <td>Yes</td>
+      <td>DAILY</td>
+      <td>Per Share(V/Adjustment Factor)</td>
+      <td>Values are adjusted at the spot fx rate of dat...</td>
+      <td>m</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>ROIC</td>
+      <td>100*IBMIIQ_LTM/max(ICAPTQ,0.02)</td>
+      <td></td>
+      <td></td>
+      <td>ROIC, LTM [Quality.Profitability] -- [100*IS_L...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>CFPS_SUR</td>
+      <td>TRE_EST_CPS_SUP_FY1</td>
+      <td></td>
+      <td></td>
+      <td>CFPS surprise (vs consensus) [Analyst sentimen...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>ES_BPS_NTM_R1M</td>
+      <td>nvl(CIQ_ES_BPS_NTM_R1M,TRE_ES_BPS_NTM_R1M)</td>
+      <td></td>
+      <td></td>
+      <td>NTM BPS revision, 1M [Analyst sentiment.BPS] -...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>ROE_STAB</td>
+      <td>ROE_AV5Y</td>
+      <td></td>
+      <td></td>
+      <td>ROE stability, 5Y [Quality.Stability in profit...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>VOL_VO_P_12M</td>
+      <td>@mstd(log(CSHTRD/PRCCD),1y)</td>
+      <td></td>
+      <td></td>
+      <td>Volatility of volume/price, 12M</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>EXP_DIV_PAYOUT</td>
+      <td>nvl(CIQ_EXP_DIV_PAYOUT,TRE_EXP_DIV_PAYOUT)</td>
+      <td></td>
+      <td></td>
+      <td>Dividend payout ratio, expected [Quality.Divid...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>255</th>
+      <td>AC_5Y_OEPS</td>
+      <td>@m2slope(OPEPSQ,5y)/PRCCD</td>
+      <td></td>
+      <td></td>
+      <td>Historical 5Y operating EPS growth acceleration</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>256</th>
+      <td>MFI</td>
+      <td>100-(100/(1+@msum(ifelse(PRCCD&gt;PRCCD_L1D,CSHTR...</td>
+      <td></td>
+      <td></td>
+      <td>Money Flow Index</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>257</th>
+      <td>ES_EBIT_NTM_R3M</td>
+      <td>nvl(CIQ_ES_EBIT_NTM_R3M,TRE_ES_EBIT_NTM_R3M)</td>
+      <td></td>
+      <td></td>
+      <td>NTM EBIT revision, 3M[Defined in the [Estimate...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>258</th>
+      <td>FXRATE_USD</td>
+      <td>USD</td>
+      <td></td>
+      <td></td>
+      <td>FX Rate Converted from choosen currency</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>259</th>
+      <td>ES_GAP</td>
+      <td>CIQ_ES_GAP</td>
+      <td></td>
+      <td></td>
+      <td>Expectation gap (5Y exp growth - FY2 growth) [...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>260</th>
+      <td>EPSYLD_GRO</td>
+      <td>EPSYLD_LTM_B*nvl(CIQ_EST_EPS_MED_LTG,TRE_EST_E...</td>
+      <td></td>
+      <td></td>
+      <td>Earnings yield (LTM, basic) x 5Y Exp Growth</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>261</th>
+      <td>GR_EXP_5Y_EPS</td>
+      <td>nvl(CIQ_GR_EXP_5Y_EPS,TRE_GR_EXP_5Y_EPS)</td>
+      <td></td>
+      <td></td>
+      <td>Consensus expected 5Y EPS growth [Growth.Expec...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>262</th>
+      <td>ES_EBIT_FY1_D3M</td>
+      <td>nvl((CIQ_EST_REV_EBI_UP_3M_FY1-CIQ_EST_REV_EBI...</td>
+      <td></td>
+      <td></td>
+      <td>FY1 EBIT diffusion (up/down ratio), 3M [Analys...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>263</th>
+      <td>SHARE_CHG</td>
+      <td>100*(CSHOQ-CSHOQ_P4)/max(CSHOQ_P4,0.02)</td>
+      <td></td>
+      <td></td>
+      <td>YoY change in share count [Quality.Capital uti...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>264</th>
+      <td>DEBT_CAPITAL</td>
+      <td>(DLCQ+DLTTQ)/max(ICAPTQ,0.02)</td>
+      <td></td>
+      <td></td>
+      <td>Total debt/total capital [Quality.Financial le...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>265</th>
+      <td>ES_TP_D3M</td>
+      <td>nvl((CIQ_REV_PTG_AVG_UP_3M_FY1-CIQ_REV_PTG_AVG...</td>
+      <td></td>
+      <td></td>
+      <td>Target price diffusion (up/down ratio), 3M [An...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>266</th>
+      <td>TP_RTN</td>
+      <td>nvl(CIQ_TP_RTN,TRE_TP_RTN)</td>
+      <td></td>
+      <td></td>
+      <td>Target price implied return [(ES_TP_ME-SPLT_PR...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>267</th>
+      <td>MA_15_36</td>
+      <td>PRCCD_AV15W/PRCCD_AV36W</td>
+      <td></td>
+      <td></td>
+      <td>Moving average crossover, 15W-36W [Alternative...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>268</th>
+      <td>REAL_VOL</td>
+      <td>RTN1D_STD1Y</td>
+      <td></td>
+      <td></td>
+      <td>Realized vol, 1Y daily [Alternative.Risk] -- [...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>269</th>
+      <td>CCI</td>
+      <td>(TypicalPrice-@mavg(TypicalPrice,1m))/@mstd(Ty...</td>
+      <td></td>
+      <td></td>
+      <td>Commodity Channel Index</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>270</th>
+      <td>GR_EINTR_CFPS</td>
+      <td>nvl(CIQ_EST_CPS_GRO_YOQ,100*(TRE_EST_CPS_MED_F...</td>
+      <td></td>
+      <td></td>
+      <td>YoY expected interim CFPS growth [Growth.Expec...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>271</th>
+      <td>GR_FY2_DPS</td>
+      <td>nvl(CIQ_GR_FY2_DPS,TRE_GR_FY2_DPS)</td>
+      <td></td>
+      <td></td>
+      <td>FY2 DPS growth [(ES_DPS_FY1_ME-ES_DPS_FY1_ME)/...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>272</th>
+      <td>ES_RECOMM_AVG</td>
+      <td>nvl(CIQ_ES_RECOMM_AVG,TRE_ES_RECOMM_AVG)</td>
+      <td></td>
+      <td></td>
+      <td>Mean recommendation [Analyst sentiment.Recomme...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>273</th>
+      <td>EXT_FIN_NOA</td>
+      <td>EXT_FINANCE_LTM/max(NOA,0.02)</td>
+      <td></td>
+      <td></td>
+      <td>Net external financing/net operating assets [Q...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>274</th>
+      <td>ISIN</td>
+      <td>ISIN</td>
+      <td></td>
+      <td></td>
+      <td>ISIN</td>
+      <td>WHOLE</td>
+      <td>Yes</td>
+      <td></td>
+      <td>None</td>
+      <td>Values are adjusted at the spot fx rate of dat...</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>275</th>
+      <td>ROE_CHG</td>
+      <td>ROE-(100*IBMIIQ_LTM_P4)/max((TEQQ_P4+TEQQ_P8)/...</td>
+      <td></td>
+      <td></td>
+      <td>YoY change in ROE [Quality.Change in profitabi...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>276</th>
+      <td>LT_DT_EQ_CHG</td>
+      <td>DLTTQ/max(CEQQ,0.02) - (DLTTQ_P4/max(CEQQ_P4,0...</td>
+      <td></td>
+      <td></td>
+      <td>YoY change in long-term debt/common equity [Qu...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>277</th>
+      <td>RTN_252D</td>
+      <td>RTN365D</td>
+      <td></td>
+      <td></td>
+      <td>Price momentum, 12M [Price momentum and revers...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>278</th>
+      <td>ES_NAV_FY1_D1M</td>
+      <td>nvl((CIQ_EST_REV_NAV_UP_1M_FY1-CIQ_EST_REV_NAV...</td>
+      <td></td>
+      <td></td>
+      <td>FY1 NAV diffusion (up/down ratio), 1M [Analyst...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>279</th>
+      <td>ES_NAV_NTM_R3M</td>
+      <td>nvl(CIQ_ES_NAV_NTM_R3M,TRE_ES_NAV_NTM_R3M)</td>
+      <td></td>
+      <td></td>
+      <td>NTM NAV revision, 3M [Analyst sentiment.NAV] -...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>280</th>
+      <td>NET_MARGIN</td>
+      <td>100*IBQ_LTM/max(SALEQ_LTM,0.02)</td>
+      <td></td>
+      <td></td>
+      <td>Net income margin [Quality.Profitability] -- [...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>281</th>
+      <td>REAL_VOL3M</td>
+      <td>RTN1D_STD3M</td>
+      <td></td>
+      <td></td>
+      <td>Realized vol, 3M daily [Alternative.Risk] -- [...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>282</th>
+      <td>PI</td>
+      <td>PI</td>
+      <td></td>
+      <td></td>
+      <td>Pretax Income</td>
+      <td>WHOLE</td>
+      <td>Yes</td>
+      <td>ANNUALLY</td>
+      <td>None</td>
+      <td>Values are adjusted at the blended rate for wh...</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>283</th>
+      <td>LT_DT_CAPITAL</td>
+      <td>DLTTQ/max(ICAPTQ,0.02)</td>
+      <td></td>
+      <td></td>
+      <td>Long-term debt/total capital [Quality.Financia...</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>284</th>
+      <td>CUM_DIV</td>
+      <td>CS_DIV</td>
+      <td>Cumulative sum over the period</td>
+      <td></td>
+      <td>Cumulative Dividend</td>
+      <td>WHOLE</td>
+      <td>No</td>
+      <td></td>
+      <td>None</td>
+      <td>No Adjustment</td>
+      <td></td>
+    </tr>
+  </tbody>
 </table>
+<p>285 rows × 11 columns</p>
+</div>
 
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
 
-<tbody>
 
-<tr bgcolor="#aa55cc">
 
-<td colspan="3" valign="bottom">   
-<font color="#ffffff" face="helvetica, arial"><big>**Modules**</big></font></td>
+```python
 
-</tr>
+```
 
-<tr>
 
-<td bgcolor="#aa55cc"></td>
 
-<td> </td>
 
-<td width="100%">
+```python
 
-<table width="100%" summary="list">
 
-<tbody>
 
-<tr>
+#Print the data object
+print(data)
 
-<td width="25%" valign="top">[csv](csv.html)  
-[logging](logging.html)  
-</td>
+```
 
-<td width="25%" valign="top">[numpy](numpy.html)  
-[os](os.html)  
-</td>
+    user1_lqtmp:List of 7 elements [[COMPANYNAME, ROE, MA_15_36, ES_EPS_NTM_R3M, PRCCD, CUM_DIV, IN_SP500]]
 
-<td width="25%" valign="top">[pandas](pandas.html)  
-[sys](sys.html)  
-</td>
 
-<td width="25%" valign="top">[tempfile](tempfile.html)  
-</td>
+For storage efficiency, data is stored in proprietary LQuant format that can be easily converted to standard data structures in Python. In this example, `data` object holds data for S&P 500 companies, the names of the data elements are printed using the print command
 
-</tr>
 
-</tbody>
 
+
+```python
+
+# You can retrieve element of the list by using the element function 
+# by passing either the index or name of the data element, e.g., ROE
+
+roe=data.element('ROE')
+# Alternatively ROE matrix can be retrieved using data.element(0)
+
+# The returned object is also a handle a data matrix stored in lquant library. 
+# You can use columns and rows function on the object to see security ids and dates
+print(roe.columns()[1:20])
+print(roe.rows()[1:20])
+
+```
+
+    ['1996-01-31', '1996-02-29', '1996-03-31', '1996-04-30', '1996-05-31', '1996-06-30', '1996-07-31', '1996-08-31', '1996-09-30', '1996-10-31', '1996-11-30', '1996-12-31', '1997-01-31', '1997-02-28', '1997-03-31', '1997-04-30', '1997-05-31', '1997-06-30', '1997-07-31']
+    ['001045.01', '001045.04', '001075.01', '001078.01', '001161.01', '001164.01', '001177.01', '001194.01', '001209.01', '001230.01', '001239.01', '001240.01', '001246.01', '001253.01', '001279.01', '001300.01', '001318.01', '001327.01', '001356.01']
+
+
+### Converting to Pandas Data Frame
+
+The lquant matrices can be easily converted into pandas data frame using the `as_matrix` function. We retain the matrix structure where rows are the securities and columns are dates. 
+
+
+```python
+# Converting to Pandas data frame
+roe_as_pandas_data_frame=roe.as_matrix()
+print(roe_as_pandas_data_frame.head(2))
+```
+
+               1995-12-31  1996-01-31  1996-02-29  1996-03-31  1996-04-30  \
+    001013.01         NaN         NaN         NaN         NaN         NaN   
+    001045.01    -0.06292   -0.060737   -0.058874    -0.06192   -0.075096   
+    
+               1996-05-31  1996-06-30  1996-07-31  1996-08-31  1996-09-30  \
+    001013.01         NaN         NaN         NaN         NaN         NaN   
+    001045.01   -0.080514   -0.080429   -0.031526   -0.034454   -0.034329   
+    
+                  ...      2016-06-30  2016-07-31  2016-08-31  2016-09-30  \
+    001013.01     ...             NaN         NaN         NaN         NaN   
+    001045.01     ...             NaN         NaN         NaN         NaN   
+    
+               2016-10-31  2016-11-30  2016-12-31  2017-01-31  2017-02-28  \
+    001013.01         NaN         NaN         NaN         NaN         NaN   
+    001045.01         NaN         NaN         NaN         NaN         NaN   
+    
+               2017-03-31  
+    001013.01         NaN  
+    001045.01         NaN  
+    
+    [2 rows x 256 columns]
+
+
+Pandas data frame returned by the API will have the `index` and `columns` properties populated with securities ids and dates respectively. 
+
+
+## Large Panda Data Frame
+
+The data object from lquantPy can be converted into one large data frame with factors as columns. The Security Id and Date show up as columns in the panel data set. Below Example show how it can be done. Note that 
+
+
+
+
+```python
+df=data.as_large_data_frame()
+print(df.head())
+
+
+
+#d2=LQuant.LQGenericData(data.context, data.ref.toLargeDataFrame())
+#d2.columns()
+```
+
+              ID       DATE                  COMPANYNAME      ROE  MA_15_36  \
+    0  001013.01 1995-12-31  ADC Telecommunications Inc.      NaN       NaN   
+    1  001045.01 1995-12-31  American Airlines Group Inc -0.06292 -0.507671   
+    2  001045.04 1995-12-31  American Airlines Group Inc      NaN       NaN   
+    3  001075.01 1995-12-31   Pinnacle West Capital Corp      NaN       NaN   
+    4  001078.01 1995-12-31          Abbott Laboratories -0.06292 -0.031372   
+    
+       ES_EPS_NTM_R3M     PRCCD    CUM_DIV  IN_SP500  
+    0             NaN  31.93751   0.000000       NaN  
+    1        0.016934  37.12500   0.000000       1.0  
+    2             NaN       NaN   0.000000       NaN  
+    3             NaN  28.75000  16.740000       NaN  
+    4       -0.051093  20.81250   2.529625       1.0  
+
+
+
+```python
+# Extracting data for a single security
+df2 = df.loc[lambda x: x.ID == '006066.01', :]
+df2.head()
+
+```
+
+
+
+
+<div>
+<style>
+    .dataframe thead tr:only-child th {
+        text-align: right;
+    }
+
+    .dataframe thead th {
+        text-align: left;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>DATE</th>
+      <th>COMPANYNAME</th>
+      <th>ROE</th>
+      <th>MA_15_36</th>
+      <th>ES_EPS_NTM_R3M</th>
+      <th>PRCCD</th>
+      <th>CUM_DIV</th>
+      <th>IN_SP500</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>293</th>
+      <td>006066.01</td>
+      <td>1995-12-31</td>
+      <td>International Business Machines Corp</td>
+      <td>-0.062920</td>
+      <td>-0.772774</td>
+      <td>-0.032100</td>
+      <td>22.84375</td>
+      <td>11.1325</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1357</th>
+      <td>006066.01</td>
+      <td>1996-01-31</td>
+      <td>International Business Machines Corp</td>
+      <td>-0.060737</td>
+      <td>-0.592580</td>
+      <td>0.055781</td>
+      <td>27.12500</td>
+      <td>11.1325</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>2421</th>
+      <td>006066.01</td>
+      <td>1996-02-29</td>
+      <td>International Business Machines Corp</td>
+      <td>-0.058874</td>
+      <td>-0.308844</td>
+      <td>0.154858</td>
+      <td>30.65625</td>
+      <td>11.1950</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>3485</th>
+      <td>006066.01</td>
+      <td>1996-03-31</td>
+      <td>International Business Machines Corp</td>
+      <td>-0.061920</td>
+      <td>0.180661</td>
+      <td>0.113959</td>
+      <td>27.81250</td>
+      <td>11.1950</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>4549</th>
+      <td>006066.01</td>
+      <td>1996-04-30</td>
+      <td>International Business Machines Corp</td>
+      <td>-0.075096</td>
+      <td>0.954144</td>
+      <td>-0.023223</td>
+      <td>26.93750</td>
+      <td>11.1950</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
 </table>
+</div>
 
-</td>
 
-</tr>
 
-</tbody>
 
+```python
+# Seeing the data and visualizing it
+
+import matplotlib.pyplot as plt
+from datetime import datetime
+
+%matplotlib inline
+
+# Fetch Prices (Note that we are using the original data element and not the big data matrix to extract prices)
+prccd=data.element('PRCCD').as_matrix()
+
+# 006066.01 is the security id for IBM (see the search API for more information)
+prc=prccd.loc['006066.01']
+dates=[datetime.strptime(d, '%Y-%m-%d') for d in prccd.columns]
+
+plt.plot(dates,prc.as_matrix())
+
+plt.xlabel('Date')
+plt.ylabel('Adjusted Price')
+plt.title('IBM Price History')
+plt.grid(True)
+plt.show()
+
+```
+
+
+![png](output_19_0.png)
+
+
+
+```python
+# Extracting String attributes
+company_name = data.element('COMPANYNAME').as_matrix()
+print(company_name.loc['006066.01'].head())
+```
+
+    1995-12-31    International Business Machines Corp
+    1996-01-31    International Business Machines Corp
+    1996-02-29    International Business Machines Corp
+    1996-03-31    International Business Machines Corp
+    1996-04-30    International Business Machines Corp
+    Name: 006066.01, dtype: object
+
+
+## Backtest
+
+User of LQuant have access to the backtesting library. The data object can be used to backtest. Below is the code illustrating it. 
+
+
+
+```python
+res=wq.basic_backtest(data,wq.new_backtest_request().forFactor('ES_EPS_NTM_R3M'))
+print(res)
+```
+
+    List of 16 elements [[coverageRaw, coverage, SCs, ICs, turnover, basketReturns, wealth, maxDD, IR, Vol, CAGR, ICDecay, cumICDecay, hitRate, cumHitRate, ICs.stats]]
+
+
+### Backtest Request
+
+Additional directives can be added to the request object to change the behavior of backtesting
+
+- withTCost(double val) 
+    
+    Directive can be used to set a fixed transaction cost in percentage. 
+    
+    
+- withBins(int bins)
+    
+    This directive can be used to set the number of the buckets 
+    
+    
+- coverageThreshold(double val)
+
+    Set the Coverage threshold for the 
+    
+    
+- classMatrixFactor(factor)
+
+    Uses a class matrix to neutralize the factor. The class matrix factor should be queries in the data. 
+
+
+
+```python
+from datetime import datetime
+import numpy as np
+import matplotlib.pyplot as plt
+
+%matplotlib inline
+
+
+#plt.subplot(1, 2, 1)
+## Coverage
+coverage=res.coverage()
+dates=[datetime.strptime(d, '%Y-%m-%d') for d in coverage.names()]
+plt.plot(dates,coverage.as_double_array(),)
+plt.xlabel('Date')
+plt.ylabel('# of Stocks')
+plt.title('S&P 500 Coverage of ES_EPS_NTM_R3M')
+plt.grid(True)
+plt.show()
+
+
+
+```
+
+
+![png](output_24_0.png)
+
+
+
+```python
+# Plot Wealth Curve
+wealth = res.wealth().as_matrix()
+wealth.columns = dates
+
+plt.plot(dates,wealth.iloc[5])
+plt.xlabel('Date')
+plt.ylabel('Long Short Wealth')
+plt.title('S&P 500 of ES_EPS_NTM_R3M')
+plt.show()
+
+
+```
+
+
+![png](output_25_0.png)
+
+
+
+```python
+# Plot Sharpe Ratio
+sharpe_ratio=res.sharpe_ratio()
+x = np.arange(sharpe_ratio.length())
+plt.bar(x, sharpe_ratio.as_double_array())
+plt.xticks(x, sharpe_ratio.names())
+plt.xlabel('Bucket')
+plt.ylabel('Sharpe Ratio')
+plt.title('S&P 500 Sharpe Ratio')
+plt.show()
+
+
+# Plot CAGR Ratio
+CAGR=res.CAGR()
+x = np.arange(CAGR.length())
+plt.bar(x, CAGR.as_double_array())
+plt.xticks(x, CAGR.names())
+plt.xlabel('Bucket')
+plt.ylabel('CAGR')
+plt.title('S&P 500 CAGR')
+plt.show()
+
+
+```
+
+
+![png](output_26_0.png)
+
+
+
+![png](output_26_1.png)
+
+
+### Search API
+
+`lquantPy` has a search API to search through Universes, Attributes and Securities. They can be accessed via `searchUniverse`, `searchAttribute` and `searchSecurity` methods available in LQuant class. In the code below, we are looking for Portugal universe. 
+
+
+```python
+# Search for universes
+# LQuant utilizes 
+wq.search_universe('Portugal').head()
+```
+
+
+
+
+<div>
+<style>
+    .dataframe thead tr:only-child th {
+        text-align: right;
+    }
+
+    .dataframe thead th {
+        text-align: left;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>vendorId</th>
+      <th>vendorIdDataType</th>
+      <th>name</th>
+      <th>description</th>
+      <th>inceptionDate</th>
+      <th>region</th>
+      <th>source</th>
+      <th>args</th>
+      <th>importance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>TQA_SPCBMICPTUSD</td>
+      <td>175</td>
+      <td>NUMERIC</td>
+      <td>TQA BMI S&amp;P Portugal BMI (US Dollar)</td>
+      <td>S&amp;P Portugal BMI (US Dollar)</td>
+      <td>1980-01-01</td>
+      <td>GLOBAL</td>
+      <td>tqaBmiUniv</td>
+      <td></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>TQAMSCI_962000</td>
+      <td>962000</td>
+      <td>NUMERIC</td>
+      <td>TQA MSCI PORTUGAL</td>
+      <td>PORTUGAL</td>
+      <td>1980-01-01</td>
+      <td>GLOBAL</td>
+      <td>msciIdx</td>
+      <td></td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>TQA_SPCBMIVCPTUSD</td>
+      <td>1249</td>
+      <td>NUMERIC</td>
+      <td>TQA BMI S&amp;P Portugal BMI Value (US Dollar)</td>
+      <td>S&amp;P Portugal BMI Value (US Dollar)</td>
+      <td>1980-01-01</td>
+      <td>GLOBAL</td>
+      <td>tqaBmiUniv</td>
+      <td></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>TQA_SPCBMIGCPTUSD</td>
+      <td>967</td>
+      <td>NUMERIC</td>
+      <td>TQA BMI S&amp;P Portugal BMI Growth (US Dollar)</td>
+      <td>S&amp;P Portugal BMI Growth (US Dollar)</td>
+      <td>1980-01-01</td>
+      <td>GLOBAL</td>
+      <td>tqaBmiUniv</td>
+      <td></td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>TQAMSCI_105940</td>
+      <td>105940</td>
+      <td>NUMERIC</td>
+      <td>TQA MSCI PORTUGAL GROWTH</td>
+      <td>PORTUGAL GROWTH</td>
+      <td>1980-01-01</td>
+      <td>GLOBAL</td>
+      <td>msciIdx</td>
+      <td></td>
+      <td>2</td>
+    </tr>
+  </tbody>
 </table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ee77aa">
-
-<td colspan="3" valign="bottom">   
-<font color="#ffffff" face="helvetica, arial"><big>**Classes**</big></font></td>
-
-</tr>
-
-<tr>
-
-<td bgcolor="#ee77aa"></td>
-
-<td> </td>
-
-<td width="100%">
-
-<dl>
-
-<dt><font face="helvetica, arial">[builtins.object](builtins.html#object)</font></dt>
-
-<dd>
-
-<dl>
-
-<dt><font face="helvetica, arial">[BaseWrap](LQuant.html#BaseWrap)</font></dt>
-
-<dd>
-
-<dl>
-
-<dt><font face="helvetica, arial">[LQOptPortfolio](LQuant.html#LQOptPortfolio)</font></dt>
-
-<dt><font face="helvetica, arial">[LQOptimizer](LQuant.html#LQOptimizer)</font></dt>
-
-<dt><font face="helvetica, arial">[LQRiskModelBuilder](LQuant.html#LQRiskModelBuilder)</font></dt>
-
-</dl>
-
-</dd>
-
-<dt><font face="helvetica, arial">[LQBacktestResult](LQuant.html#LQBacktestResult)</font></dt>
-
-<dt><font face="helvetica, arial">[LQEnv](LQuant.html#LQEnv)</font></dt>
-
-<dt><font face="helvetica, arial">[LQExportedData](LQuant.html#LQExportedData)</font></dt>
-
-<dt><font face="helvetica, arial">[LQGenericData](LQuant.html#LQGenericData)</font></dt>
-
-<dt><font face="helvetica, arial">[LQMultiFactorAnalytics](LQuant.html#LQMultiFactorAnalytics)</font></dt>
-
-<dt><font face="helvetica, arial">[LQPort](LQuant.html#LQPort)</font></dt>
-
-<dt><font face="helvetica, arial">[LQRiskModel](LQuant.html#LQRiskModel)</font></dt>
-
-<dt><font face="helvetica, arial">[LQuant](LQuant.html#LQuant)</font></dt>
-
-<dt><font face="helvetica, arial">[MultiFactorBacktest](LQuant.html#MultiFactorBacktest)</font></dt>
-
-<dt><font face="helvetica, arial">[TempVar](LQuant.html#TempVar)</font></dt>
-
-</dl>
-
-</dd>
-
-</dl>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="BaseWrap">class **BaseWrap**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr>
-
-<td bgcolor="#ffc8d8"></td>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="BaseWrap-__init__">**__init__**</a>(self, env, handle)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="BaseWrap-name">**name**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
+</div>
+
+
+
+
+```python
+wq.search_security('Apple').head()
+```
+
+
+
+
+<div>
+<style>
+    .dataframe thead tr:only-child th {
+        text-align: right;
+    }
+
+    .dataframe thead th {
+        text-align: left;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>ticker</th>
+      <th>exchange</th>
+      <th>name</th>
+      <th>currency</th>
+      <th>status</th>
+      <th>descr</th>
+      <th>source</th>
+      <th>primflag</th>
+      <th>sedol</th>
+      <th>importance</th>
+      <th>isoCurrency</th>
+      <th>country</th>
+      <th>region</th>
+      <th>isoCountry</th>
+      <th>cusip</th>
+      <th>isin</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>001690.01</td>
+      <td>AAPL</td>
+      <td>NASDAQ</td>
+      <td>Apple Inc-COM NPV</td>
+      <td>US Dollar</td>
+      <td>A</td>
+      <td>Apple Inc. designs, manufactures, and markets ...</td>
+      <td>NA</td>
+      <td>Y</td>
+      <td>2046251</td>
+      <td>1</td>
+      <td>USD</td>
+      <td>United States</td>
+      <td>United States and Canada</td>
+      <td>US</td>
+      <td>037833100</td>
+      <td>US0378331005</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>304348005</td>
+      <td></td>
+      <td>SIX Swiss Exchange</td>
+      <td>Apple Inc.- Common Stock</td>
+      <td>Euro</td>
+      <td>A</td>
+      <td></td>
+      <td>GLOBAL</td>
+      <td>Y</td>
+      <td></td>
+      <td>2</td>
+      <td>EUR</td>
+      <td>Switzerland</td>
+      <td>Europe</td>
+      <td>CH</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2590360</td>
+      <td>AAPL</td>
+      <td>Nasdaq Global Select</td>
+      <td>Apple Inc.-Common Stock</td>
+      <td>US Dollar</td>
+      <td>A</td>
+      <td></td>
+      <td>GLOBAL</td>
+      <td>Y</td>
+      <td>2046251</td>
+      <td>2</td>
+      <td>USD</td>
+      <td>United States</td>
+      <td>United States and Canada</td>
+      <td>US</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>308716962</td>
+      <td>AAPL</td>
+      <td>Bolsa de Valores de Lima</td>
+      <td>Apple Inc.-Common Stock</td>
+      <td>US Dollar</td>
+      <td>A</td>
+      <td></td>
+      <td>GLOBAL</td>
+      <td>N</td>
+      <td>BYS3934</td>
+      <td>3</td>
+      <td>USD</td>
+      <td>Peru</td>
+      <td>Latin America and Caribbean</td>
+      <td>PE</td>
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>260339402</td>
+      <td>AAPL</td>
+      <td>Wiener Boerse AG</td>
+      <td>Apple Inc.-Common Stock</td>
+      <td>Euro</td>
+      <td>A</td>
+      <td></td>
+      <td>GLOBAL</td>
+      <td>N</td>
+      <td>BF1SS69</td>
+      <td>3</td>
+      <td>EUR</td>
+      <td>Austria</td>
+      <td>Europe</td>
+      <td>AT</td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
 </table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQBacktestResult">class **LQBacktestResult**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr bgcolor="#ffc8d8">
-
-<td rowspan="2"></td>
-
-<td colspan="2"><tt>Class is a thin wrapper on backtest results [object](builtins.html#object) exposing all items in the list [object](builtins.html#object)  
- </tt></td>
-
-</tr>
-
-<tr>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="LQBacktestResult-CAGR">**CAGR**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-IC_decay">**IC_decay**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-IC_stats">**IC_stats**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-__init__">**__init__**</a>(self, analytics, res)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-__repr__">**__repr__**</a>(self)</dt>
-
-<dd><tt>Return repr(self).</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-__str__">**__str__**</a>(self)</dt>
-
-<dd><tt>Return str(self).</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-basket_returns">**basket_returns**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-coverage">**coverage**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-coverage_raw">**coverage_raw**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-cum_IC_decay">**cum_IC_decay**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-cum_hit_rate">**cum_hit_rate**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-get_dates">**get_dates**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-hit_rate">**hit_rate**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-maximum_draw_down">**maximum_draw_down**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-plot_CAGR">**plot_CAGR**</a>(self, title)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-plot_IC">**plot_IC**</a>(self, title)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-plot_coverage">**plot_coverage**</a>(self, title)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-plot_coverage_raw">**plot_coverage_raw**</a>(self, title)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-plot_seasonal_IC">**plot_seasonal_IC**</a>(self, title)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-plot_sharpe_ratio">**plot_sharpe_ratio**</a>(self, title)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-plot_turnover">**plot_turnover**</a>(self, title)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-plot_wealth">**plot_wealth**</a>(self, title)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-plot_wealthLS">**plot_wealthLS**</a>(self, title)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-serial_correlation">**serial_correlation**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-sharpe_ratio">**sharpe_ratio**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-turnover">**turnover**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-volatility">**volatility**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQBacktestResult-wealth">**wealth**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
+</div>
+
+
+
+
+```python
+wq.search_attribute('Earnings Per Share').head()
+```
+
+
+
+
+<div>
+<style>
+    .dataframe thead tr:only-child th {
+        text-align: right;
+    }
+
+    .dataframe thead th {
+        text-align: left;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Mnemonic</th>
+      <th>Expression</th>
+      <th>Function</th>
+      <th>Args</th>
+      <th>Description</th>
+      <th>Unit</th>
+      <th>Is Value</th>
+      <th>Frequency</th>
+      <th>Adjustment Type</th>
+      <th>Fx Adjustment</th>
+      <th>Staleness Threshold</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>CS_EPS</td>
+      <td>EPS</td>
+      <td></td>
+      <td></td>
+      <td>Earnings Per Share - Current</td>
+      <td>PER_SHARE</td>
+      <td>Yes</td>
+      <td>DAILY</td>
+      <td>Per Share(V/Adjustment Factor)</td>
+      <td>Values are adjusted at the spot fx rate of dat...</td>
+      <td>20y</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>CS_EPSMO</td>
+      <td>EPSMO</td>
+      <td></td>
+      <td></td>
+      <td>Earnings Per Share Month - Current</td>
+      <td>PER_SHARE</td>
+      <td>Yes</td>
+      <td>DAILY</td>
+      <td>Per Share(V/Adjustment Factor)</td>
+      <td>Values are adjusted at the spot fx rate of dat...</td>
+      <td>20y</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>CIQ_142</td>
+      <td>142</td>
+      <td></td>
+      <td></td>
+      <td>This item represents the diluted earnings per ...</td>
+      <td>PER_SHARE</td>
+      <td>Yes</td>
+      <td>ANNUALLY</td>
+      <td>None</td>
+      <td>Values are adjusted at the blended rate for wh...</td>
+      <td>3y</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>CIQ_142_Q</td>
+      <td>142</td>
+      <td></td>
+      <td></td>
+      <td>This item represents the diluted earnings per ...</td>
+      <td>PER_SHARE</td>
+      <td>Yes</td>
+      <td>QUARTERLY</td>
+      <td>None</td>
+      <td>Values are adjusted at the blended rate for wh...</td>
+      <td>18m</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>IQ_DILUT_EPS_EXCL</td>
+      <td>142</td>
+      <td></td>
+      <td></td>
+      <td>This item represents the diluted earnings per ...</td>
+      <td>PER_SHARE</td>
+      <td>Yes</td>
+      <td>ANNUALLY</td>
+      <td>None</td>
+      <td>Values are adjusted at the blended rate for wh...</td>
+      <td>3y</td>
+    </tr>
+  </tbody>
 </table>
+</div>
 
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
 
-<tbody>
 
-<tr bgcolor="#ffc8d8">
+### Defining New Factors
 
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQEnv">class **LQEnv**</a>([builtins.object](builtins.html#object))</font></td>
+You can dynamically create new factors using existing. Simple mathematical expression can be constructed. The expression support simple mathematical functions (e.g., abs, exp, pow, log) and operators (e.g., *,/,+,-). There are also timeseries functions that can be created. For more information on the timeseries function, please see the [documentation](https://github.com/wolferesearch/docs/blob/master/functions.md)
 
-</tr>
 
-<tr bgcolor="#ffc8d8">
+```python
+# Define a new Factor
 
-<td rowspan="2"></td>
+wq.define('CloseToHigh=PRCCD/PRCHD')
+wq.factor_detail('CloseToHigh','COMPUSTAT')
+```
 
-<td colspan="2"><tt>Class [LQEnv](#LQEnv): Direct handle to the analytics environment (R Kernel)  
-This class should only be used for diagnostic purposes. A few things that  
-can be done here  
-- Lists down variable in the environment  
-- Save variable to a file  
-- Run a custom command  
-- Import values into the environment (arrays and matrices)  
-- Get an [object](builtins.html#object) from the environment  
- </tt></td>
 
-</tr>
 
-<tr>
 
-<td> </td>
+<div>
+<style>
+    .dataframe thead tr:only-child th {
+        text-align: right;
+    }
 
-<td width="100%">Methods defined here:  
+    .dataframe thead th {
+        text-align: left;
+    }
 
-<dl>
-
-<dt><a name="LQEnv-__init__">**__init__**</a>(self, context, kernel)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQEnv-get">**get**</a>(self, name)</dt>
-
-<dd><tt>Gets handle to an [object](builtins.html#object) in the environment  
-:param name: Name of the [object](builtins.html#object)  
-:return: Handle to the [object](builtins.html#object)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQEnv-import_double_array">**import_double_array**</a>(self, name, array, names)</dt>
-
-<dd><tt>Imports a numeric array into the environment  
-:param name: Name to assign  
-:param array: Array or list of double values  
-:param names: Optional names for the values  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQEnv-import_double_matrix">**import_double_matrix**</a>(self, name, matrix, rownames, colnames)</dt>
-
-<dd><tt>Imports a numeric matrix into the environment  
-:param name: Name to assign  
-:param matrix: Data matrix (Pandas data frame)  
-:param rownames: Not used  
-:param colnames: Not used  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQEnv-import_string_array">**import_string_array**</a>(self, name, array, names)</dt>
-
-<dd><tt>Imports a string array into the environment  
-:param name: Name to assign  
-:param array: Array or list of strings  
-:param names: Optional names for the values  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQEnv-import_string_matrix">**import_string_matrix**</a>(self, name, matrix, rownames, colnames)</dt>
-
-<dd><tt>Imports a string matrix into the environment  
-:param name: Name of the  
-:param matrix: Pandas data frame containing string values  
-:param rownames: Not used  
-:param colnames: Not used  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQEnv-list">**list**</a>(self)</dt>
-
-<dd><tt>List down all variables in the environment  
-:return: Array containing list of variable names</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQEnv-run">**run**</a>(self, cmd)</dt>
-
-<dd><tt>Runs a custom command  
-:param cmd: String command  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQEnv-save">**save**</a>(self, v, file)</dt>
-
-<dd><tt>Saves [object](builtins.html#object) to a file  
-:param v: Name of the [object](builtins.html#object) to save  
-:param file: Name of the file  
-:return:</tt></dd>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Key</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Mnemonic</td>
+      <td>CloseToHigh</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Expression</td>
+      <td>PRCCD/PRCHD</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Function</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Args</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Description</td>
+      <td>PRCCD/PRCHD</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Unit</td>
+      <td>WHOLE</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Is Value</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Frequency</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Adjustment Type</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Fx Adjustment</td>
+      <td>No Adjustment</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Staleness Threshold</td>
+      <td></td>
+    </tr>
+  </tbody>
 </table>
+</div>
 
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
 
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQExportedData">class **LQExportedData**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr>
-
-<td bgcolor="#ffc8d8"></td>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="LQExportedData-__init__">**__init__**</a>(self, dirpath)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQExportedData-asNP">**asNP**</a>(self, attrib)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQExportedData-attribs">**attribs**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQExportedData-dates">**dates**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQExportedData-exportAsNP">**exportAsNP**</a>(self, savedir)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQExportedData-load">**load**</a>(self, attrib)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQExportedData-loadAll">**loadAll**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQExportedData-secs">**secs**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQExportedData-values">**values**</a>(self, sec, attrib)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQGenericData">class **LQGenericData**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr bgcolor="#ffc8d8">
-
-<td rowspan="2"></td>
-
-<td colspan="2"><tt>An instance of this class is returned by all interfaces of [LQuant](#LQuant). The class allows  
- navigating through the data item and also opens up analytics functions  
- </tt></td>
-
-</tr>
-
-<tr>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="LQGenericData-__as_data_frame__">**__as_data_frame__**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-__del__">**__del__**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-__getitem__">**__getitem__**</a>(self, key)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-__init__">**__init__**</a>(self, context, ref, deleteOnExit=False)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-__repr__">**__repr__**</a>(self)</dt>
-
-<dd><tt>Return repr(self).</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-__str__">**__str__**</a>(self)</dt>
-
-<dd><tt>Return str(self).</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-append_double_matrix">**append_double_matrix**</a>(self, name, matrix)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-append_string_matrix">**append_string_matrix**</a>(self, name, matrix)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-as_double">**as_double**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-as_double_array">**as_double_array**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-as_large_data_frame">**as_large_data_frame**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-as_matrix">**as_matrix**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-as_string">**as_string**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-as_string_array">**as_string_array**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-columns">**columns**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-data_type">**data_type**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-element">**element**</a>(self, indx)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-get_double">**get_double**</a>(self, i)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-get_string">**get_string**</a>(self, i)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-is_array">**is_array**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-is_data_frame">**is_data_frame**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-is_list">**is_list**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-is_matrix">**is_matrix**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-is_primitive">**is_primitive**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-length">**length**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-name">**name**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-names">**names**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-num_cols">**num_cols**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-num_rows">**num_rows**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-rows">**rows**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQGenericData-structure">**structure**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQMultiFactorAnalytics">class **LQMultiFactorAnalytics**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr bgcolor="#ffc8d8">
-
-<td rowspan="2"></td>
-
-<td colspan="2"><tt>Wrapper Class that provides access to multi-factor analytics. Class provides access to:  
- 1. Neutralization and Inversion of factors  
- 2. Compute Risk Parity based factor weights  
- 3. Compute Factor score using different weighting scheme  
- 4. Compute Factor score for sector-by-sector factor weighting  
-
- The class is designed to append to existing data [object](builtins.html#object) in the R Kernel environment. API caller  
- can choose  
- </tt></td>
-
-</tr>
-
-<tr>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-__init__">**__init__**</a>(self, wq, env, data, inflag)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-backtest">**backtest**</a>(self, factors, bins, align=True)</dt>
-
-<dd><tt>Performs simple backtest for multiple factors  
-:param factors: List of factors to backtest  
-:param bins: Number of bins  
-:param align:  
-:return: Multi-backtest [object](builtins.html#object)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-basic_neutralize_factor">**basic_neutralize_factor**</a>(self, varname, factor, method, class_matrix=None)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-generate_excel">**generate_excel**</a>(self, results)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-get_ic_alpha">**get_ic_alpha**</a>(self, varname, factors, period=60)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-get_risk_parity_weights">**get_risk_parity_weights**</a>(self, varname, factors, alpha=None)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-get_risk_parity_weights_using_ic">**get_risk_parity_weights_using_ic**</a>(self, varname, factors, period=60, alpha=None)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-get_sector_risk_parity_weights">**get_sector_risk_parity_weights**</a>(self, varname, factors, class_flag='QES_GSECTOR', alpha=None)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-get_sector_risk_parity_weights_ic">**get_sector_risk_parity_weights_ic**</a>(self, varname, factors, class_flag='QES_GSECTOR', alpha=None, period=60)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-get_vol_weights">**get_vol_weights**</a>(self, varname, factors)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-invert_factors">**invert_factors**</a>(self, factors)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-mask_factors">**mask_factors**</a>(self, factors)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-merge_factor_values">**merge_factor_values**</a>(self, factor, from_value, to_value)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-multi_factor_sector_score">**multi_factor_sector_score**</a>(self, varname, factors, class_flag, weights)</dt>
-
-<dd><tt>Computes multi-factor score using the weighting of factors by sector  
-:param varname: Name of the Score to assign to the data container  
-:param factors: List of factors  
-:param class_flag: Name of the classification (sector) flag, e.g., QES_GSECTOR  
-:param weights: Weights List. This should be a list of matrices with each element containing matrix with  
-time series weights  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQMultiFactorAnalytics-multi_factor_weighting">**multi_factor_weighting**</a>(self, varname, factors, weights)</dt>
-
-<dd><tt>Computes multi-factor score using the weighting of the factor  
-:param varname: Name of the Weighting to assign to the data container  
-:param factors: List of factors  
-:param weights: Weight matrix  
-:return:</tt></dd>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQOptPortfolio">class **LQOptPortfolio**</a>([BaseWrap](LQuant.html#BaseWrap))</font></td>
-
-</tr>
-
-<tr bgcolor="#ffc8d8">
-
-<td rowspan="2"></td>
-
-<td colspan="2"><tt>Wrapper for Optimized Portfolio. Provides basic information about optimized portfolio  
- </tt></td>
-
-</tr>
-
-<tr>
-
-<td> </td>
-
-<td width="100%">
-
-<dl>
-
-<dt>Method resolution order:</dt>
-
-<dd>[LQOptPortfolio](LQuant.html#LQOptPortfolio)</dd>
-
-<dd>[BaseWrap](LQuant.html#BaseWrap)</dd>
-
-<dd>[builtins.object](builtins.html#object)</dd>
-
-</dl>
-
-* * *
-
-Methods defined here:  
-
-<dl>
-
-<dt><a name="LQOptPortfolio-__init__">**__init__**</a>(self, env, handle)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptPortfolio-alpha">**alpha**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptPortfolio-status">**status**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptPortfolio-txn_cost">**txn_cost**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptPortfolio-variance">**variance**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptPortfolio-weights">**weights**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Methods inherited from [BaseWrap](LQuant.html#BaseWrap):  
-
-<dl>
-
-<dt><a name="LQOptPortfolio-name">**name**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors inherited from [BaseWrap](LQuant.html#BaseWrap):  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQOptimizer">class **LQOptimizer**</a>([BaseWrap](LQuant.html#BaseWrap))</font></td>
-
-</tr>
-
-<tr bgcolor="#ffc8d8">
-
-<td rowspan="2"></td>
-
-<td colspan="2"><tt>Optimizer Class. Uses Risk Model Builder, Risk Model , Date and Notional Value  
- </tt></td>
-
-</tr>
-
-<tr>
-
-<td> </td>
-
-<td width="100%">
-
-<dl>
-
-<dt>Method resolution order:</dt>
-
-<dd>[LQOptimizer](LQuant.html#LQOptimizer)</dd>
-
-<dd>[BaseWrap](LQuant.html#BaseWrap)</dd>
-
-<dd>[builtins.object](builtins.html#object)</dd>
-
-</dl>
-
-* * *
-
-Methods defined here:  
-
-<dl>
-
-<dt><a name="LQOptimizer-__init__">**__init__**</a>(self, env, risk_model_builder, risk_model, date, notional_value)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptimizer-build_maximize_alpha_portfolio">**build_maximize_alpha_portfolio**</a>(self, alpha)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptimizer-build_minimum_risk_portfolio">**build_minimum_risk_portfolio**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptimizer-limit_risk_to">**limit_risk_to**</a>(self, risk_target)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptimizer-max_long_stock_weight">**max_long_stock_weight**</a>(self, max_weight)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptimizer-max_short_stock_weight">**max_short_stock_weight**</a>(self, max_weight)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptimizer-with_long_short_weights">**with_long_short_weights**</a>(self, net_weight, gross_weight)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQOptimizer-with_max_adv">**with_max_adv**</a>(self, max_adv)</dt>
-
-</dl>
-
-* * *
-
-Methods inherited from [BaseWrap](LQuant.html#BaseWrap):  
-
-<dl>
-
-<dt><a name="LQOptimizer-name">**name**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors inherited from [BaseWrap](LQuant.html#BaseWrap):  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQPort">class **LQPort**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr bgcolor="#ffc8d8">
-
-<td rowspan="2"></td>
-
-<td colspan="2"><tt>Class [LQPort](#LQPort). Provides access to user uploaded portfolio. It allows the caller to do the following  
-- List down constituents  
-- Look at summary  
-- Look for unmapped  
-- Query factors associated with Portfolio  
-- Delete portfolio  
- </tt></td>
-
-</tr>
-
-<tr>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="LQPort-__init__">**__init__**</a>(self, port)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQPort-attributes">**attributes**</a>(self)</dt>
-
-<dd><tt>Lists set of factors associated with the portfolio/data  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQPort-delete">**delete**</a>(self)</dt>
-
-<dd><tt>Deletes the portfolio, should be the owner of the portfolio  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQPort-exists">**exists**</a>(self)</dt>
-
-<dd><tt>Checks if the portfolio exists  
-:return: Return True if the portfolio exists otherwise false</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQPort-id">**id**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQPort-internal_id">**internal_id**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQPort-owner">**owner**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQPort-summary">**summary**</a>(self)</dt>
-
-<dd><tt>Returns a simple summary of the portfolio/data  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQPort-unmapped">**unmapped**</a>(self)</dt>
-
-<dd><tt>Returns data frame with list of unmapped securities  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQPort-upload_attributes">**upload_attributes**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQRiskModel">class **LQRiskModel**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr bgcolor="#ffc8d8">
-
-<td rowspan="2"></td>
-
-<td colspan="2"><tt>Risk Model Data Class.  
- </tt></td>
-
-</tr>
-
-<tr>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="LQRiskModel-__init__">**__init__**</a>(self, rmd)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQRiskModel-cov">**cov**</a>(self)</dt>
-
-<dd><tt>Returns factor covariance matrix  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQRiskModel-exp">**exp**</a>(self)</dt>
-
-<dd><tt>Returns exposures (Beta) of the stocks  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQRiskModel-idm">**idm**</a>(self)</dt>
-
-<dd><tt>Returns identity data frame for reference  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQRiskModel-rsk">**rsk**</a>(self)</dt>
-
-<dd><tt>Returns stock idio risk vector  
-:return:</tt></dd>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQRiskModelBuilder">class **LQRiskModelBuilder**</a>([BaseWrap](LQuant.html#BaseWrap))</font></td>
-
-</tr>
-
-<tr bgcolor="#ffc8d8">
-
-<td rowspan="2"></td>
-
-<td colspan="2"><tt>Multi-period Risk Model Builder Class. Generates Risk model on the fly  
- </tt></td>
-
-</tr>
-
-<tr>
-
-<td> </td>
-
-<td width="100%">
-
-<dl>
-
-<dt>Method resolution order:</dt>
-
-<dd>[LQRiskModelBuilder](LQuant.html#LQRiskModelBuilder)</dd>
-
-<dd>[BaseWrap](LQuant.html#BaseWrap)</dd>
-
-<dd>[builtins.object](builtins.html#object)</dd>
-
-</dl>
-
-* * *
-
-Methods defined here:  
-
-<dl>
-
-<dt><a name="LQRiskModelBuilder-__init__">**__init__**</a>(self, env, dlname, idxFlag)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQRiskModelBuilder-dates">**dates**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQRiskModelBuilder-get_risk_model">**get_risk_model**</a>(self, date)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQRiskModelBuilder-setup_data">**setup_data**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Methods inherited from [BaseWrap](LQuant.html#BaseWrap):  
-
-<dl>
-
-<dt><a name="LQRiskModelBuilder-name">**name**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors inherited from [BaseWrap](LQuant.html#BaseWrap):  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="LQuant">class **LQuant**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr bgcolor="#ffc8d8">
-
-<td rowspan="2"></td>
-
-<td colspan="2"><tt>[LQuant](#LQuant) Gateway Class  
-Primary purpose of this class is to interact with the [LQuant](#LQuant) application. It provides the following functionalities:  
-1. Access to Factor data  
-2. Access to Universe  
-3. Access to R Analytical environment  
-4. Access to Risk Model Generator  
-5. Access to Optimization  
-6. Access to Multi-factor Analytics Class  
-7. Access to portfolio uploader  
-8. Access to Backtester  
- </tt></td>
-
-</tr>
-
-<tr>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="LQuant-__init__">**__init__**</a>(self)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-__js__">**__js__**</a>(self, s)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-basic_backtest">**basic_backtest**</a>(self, data, req)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-define">**define**</a>(self, expression)</dt>
-
-<dd><tt>Creates a new factor based on expression  
-:param expression: Expression (e.g., AV_PRICE=@mavg(PRCCD,1m))  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-env">**env**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-execute">**execute**</a>(self, req)</dt>
-
-<dd><tt>Executes a request. The request [object](builtins.html#object) have several mandatory and optional directive.  
-For a complete list of directives, refer to documentation  
-:param req: Request [object](builtins.html#object) constructed using the new_request call  
-:return: Instance of Java Handle to the data</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-factor_detail">**factor_detail**</a>(self, attr, source='COMPUSTAT')</dt>
-
-<dd><tt>:param attr: Name of the factor  
-:param source: Source of the factor (e.g., COMPUSTAT,CIQ)  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-factor_graph">**factor_graph**</a>(self, attr, source='COMPUSTAT')</dt>
-
-<dd><tt>:param attr: Name of the factor (e.g., ROE)  
-:return: Image png file path with the graphical representation of the execution</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-get_data">**get_data**</a>(self, req)</dt>
-
-<dd><tt>Executes a request. The request [object](builtins.html#object) have several mandatory and optional directive.  
-For a complete list of directives, refer to documentation  
-:param req: Request [object](builtins.html#object) constructed using the new_request call  
-:return: Instance of [LQGenericData](#LQGenericData) class that can be converted to Pandas data frame</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-get_factors">**get_factors**</a>(self)</dt>
-
-<dd><tt>Lists down available factors  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-get_port">**get_port**</a>(self, _id)</dt>
-
-<dd><tt>Returns handle to the portfolio  
-:param _id: Id of the portfolio  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-get_user_resource">**get_user_resource**</a>(self, username, type)</dt>
-
-<dd><tt>:param username: Username for which to run the query  
-:param type: Type of query (universe,factor,meta)  
-:return: Data frame containing the resource information</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-load_csv_data">**load_csv_data**</a>(self, filename, varname, idCol, dateCol)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-multi_factor_analysis">**multi_factor_analysis**</a>(self, data, inflag)</dt>
-
-<dd><tt>    Provides handle to analytics class that allows multi factor analysis  
-:param data: Data [object](builtins.html#object) fetched previously using get_data call  
-:param inflag: String in flag (e.g., IN_SP500)  
-:return: Handle to the Analytics class</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-new_request">**new_request**</a>(self)</dt>
-
-<dd><tt>Builds an empty request [object](builtins.html#object). The [object](builtins.html#object) exposes a fluent API to add parameters to request  
-:return: Data Query Request Object  
-    from(yyyy-mm-dd) start date  
-    to(yyyy-mm-dd) end date  
-    runFor(universeId) universe specification  
-    at(frequency) frequency specification  
-    a(attribute) attribute. This method can be called multiple times for multiple attributes  
-    forDates(dates array yyyy-mm-dd) List of dates. Should not be combined with from/to/at directives</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-new_risk_model_builder">**new_risk_model_builder**</a>(self, data, idxFlagName)</dt>
-
-<dd><tt>Provides instance of a new risk model builder  
-:param data: Data [object](builtins.html#object) returned from get_data call  
-:param idxFlagName:  Name of the index flag  
-:return: Handle to Risk Model Builder</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-optimizer">**optimizer**</a>(self, risk_model_builder, risk_model, date, notional_value)</dt>
-
-<dd><tt>Provides instance of a new optimization runner  
-:param risk_model_builder: Handle to risk model builder  
-:param risk_model: Handle to risk model data  
-:param date: Date of optimization  
-:param notional_value: Notional value of the portfolio to optimize  
-:return:</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-plan_tree">**plan_tree**</a>(self, attr, source='COMPUSTAT')</dt>
-
-<dd><tt>Return the complete execution tree detail for the factor  
-:param attr: Name of the factor (e.g., ROE)  
-:param source: Source of the factor (e.g., COMPUSTAT, CIQ)  
-:return: String with details of execution</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-port_list">**port_list**</a>(self, username, current_user_only=False)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-port_list_by_user">**port_list_by_user**</a>(self, user, current_user_only=True)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-port_upload">**port_upload**</a>(self, _id, header, data, _global=False, pit_id=False, short_format=False, user=None)</dt>
-
-<dd><tt>Uploads data matrix into lquant  
-:param id: Unique identifier  
-:param header: columns of the data  
-:param data: data frame containing data  
-:param _global: Boolean flag to indicate if this is Global  
-:param pit_id: Boolean flag to indicate if the id is point-in-time  
-:param short_format: Boolean flag to indicate if the data is in short format (From-To)  
-:return: Handle to portfolio</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-port_upload_data">**port_upload_data**</a>(self, _id, header, data, _global=False, pit_id=False, short_format=False, user=None)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-port_upload_data_file">**port_upload_data_file**</a>(self, _id, filename, _global=False, pit_id=False, short_format=False, user=None)</dt>
-
-<dd><tt>Uploads raw data into Lquant  
-:param _id: Unique identifier for the portfolio  
-:param filename: Full path of the file containing constituents  
-:param _global: Boolean flag indicating if this to be mapped to US/Canada or Global securities  
-:param pit_id:  Boolean flag to indicate if the Identifier Point in TIme (Default is False)  
-:param short_format: Boolean flag to indicate if the format of the file is long/short format, see documentation  
-                    for details  
-:param user: Name of the user for which to upload  
-:return: Returns a portfolio handle</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-port_upload_file">**port_upload_file**</a>(self, _id, filename, _global=False, pit_id=False, short_format=False, user=None)</dt>
-
-<dd><tt>Uploads portfolio and corresponding data into Lquant  
-:param _id: Unique identifier for the portfolio  
-:param filename: Full path of the file containing constituents  
-:param _global: Boolean flag indicating if this to be mapped to US/Canada or Global securities  
-:param pit_id:  Boolean flag to indicate if the Identifier Point in TIme (Default is False)  
-:param short_format: Boolean flag to indicate if the format of the file is long/short format, see documentation  
-                    for details  
-:return: Returns a portfolio handle</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-quantdb_query">**quantdb_query**</a>(self, name, query)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-quantdb_user_query">**quantdb_user_query**</a>(self, username, name, query)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-search">**search**</a>(self, type, query)</dt>
-
-<dd><tt>:param type: Type of entity (UNIVERSE, ATTRIBUTE, SECURITY)  
-:param query: Free format search query  
-:return: List of entities matching the</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-search_attribute">**search_attribute**</a>(self, query)</dt>
-
-<dd><tt>Searches factors (attributes) based on the string query  
-:param query: String query (e.g., Earnings)  
-:return: Data frame with hits</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-search_security">**search_security**</a>(self, query)</dt>
-
-<dd><tt>Searches securities based on the string query  
-:param query: String query (e.g., Apple)  
-:return: Data frame with hits</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-search_universe">**search_universe**</a>(self, query)</dt>
-
-<dd><tt>Searches universe based on the string query  
-:param query: String query (e.g., Korea)  
-:return: Data frame with hits</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-valuation_spread">**valuation_spread**</a>(self, data, req)</dt>
-
-</dl>
-
-* * *
-
-Static methods defined here:  
-
-<dl>
-
-<dt><a name="LQuant-new_backtest_request">**new_backtest_request**</a>()</dt>
-
-<dd><tt>Creates a new backtest request  
-:return: Handle to backtest request</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="LQuant-new_valspread_request">**new_valspread_request**</a>()</dt>
-
-<dd><tt>Creates a new Valuation Spread Request  
-:return: Handle to valuation spread request</tt></dd>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="MultiFactorBacktest">class **MultiFactorBacktest**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr>
-
-<td bgcolor="#ffc8d8"></td>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="MultiFactorBacktest-__init__">**__init__**</a>(self, env, backtest_results, factors)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="MultiFactorBacktest-factor_name">**factor_name**</a>(self, i)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="MultiFactorBacktest-generate_excel">**generate_excel**</a>(self, univName, baskets)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="MultiFactorBacktest-generate_pdf">**generate_pdf**</a>(self, filename, title, i)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="MultiFactorBacktest-get">**get**</a>(self, i)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-<table width="100%" cellspacing="0" cellpadding="2" border="0" summary="section">
-
-<tbody>
-
-<tr bgcolor="#ffc8d8">
-
-<td colspan="3" valign="bottom">   
-<font color="#000000" face="helvetica, arial"><a name="TempVar">class **TempVar**</a>([builtins.object](builtins.html#object))</font></td>
-
-</tr>
-
-<tr>
-
-<td bgcolor="#ffc8d8"></td>
-
-<td> </td>
-
-<td width="100%">Methods defined here:  
-
-<dl>
-
-<dt><a name="TempVar-__del__">**__del__**</a>(self)</dt>
-
-</dl>
-
-<dl>
-
-<dt><a name="TempVar-__init__">**__init__**</a>(self, env)</dt>
-
-<dd><tt>Initialize self.  See help(type(self)) for accurate signature.</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt><a name="TempVar-name">**name**</a>(self)</dt>
-
-</dl>
-
-* * *
-
-Data descriptors defined here:  
-
-<dl>
-
-<dt>**__dict__**</dt>
-
-<dd><tt>dictionary for instance variables (if defined)</tt></dd>
-
-</dl>
-
-<dl>
-
-<dt>**__weakref__**</dt>
-
-<dd><tt>list of weak references to the object (if defined)</tt></dd>
-
-</dl>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
