@@ -46,6 +46,12 @@ SFTPConnection <- R6Class(
         writeChar(txt, sprintf('%s/%s',outdir,outfile))
         close(outfile)
       }
+    },
+    info = function() {
+      if (is.null(self$con)) {
+        stop("Not Connected")
+      }
+      return(RCurl::getCurlInfo(self$con))R
     }
   )
 )
