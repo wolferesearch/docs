@@ -51,7 +51,7 @@ SFTPConnection <- R6Class(
       if (is.null(self$con)) {
         stop("Not Connected")
       }
-      return(RCurl::getCurlInfo(self$con))R
+      return(RCurl::getCurlInfo(self$con))
     }
   )
 )
