@@ -122,7 +122,7 @@ class RemoteJupyterClient:
         Python wrapper to interact with Remote Jupyter environment using the REST and Websocket API
     """
 
-    def __init__(self, user, token, url):
+    def __init__(self, user, token, url, verify = False):
         """
         Constructor for RemoteJupyter Client
 
@@ -134,6 +134,7 @@ class RemoteJupyterClient:
         self.user = user
         self.token = token
         self.url = url
+        self.verify = verify
         self.headers = {'Authorization': 'Token ' + token}
         
     def _url_(self,svc,path):
@@ -144,7 +145,7 @@ class RemoteJupyterClient:
     
     def _get_(self,svc,path):
         url =  self._url_(svc,path)
-        response = requests.get(url,headers=self.headers)
+        response = requests.get(url,headers=self.headers, verify = self.verify)
         return json.loads(response.text)
     
     def content(self, path):
