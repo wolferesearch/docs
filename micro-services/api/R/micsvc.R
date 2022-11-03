@@ -1,7 +1,8 @@
 ### R Class to work with optimizer
 
-require(httr)
-require(R6)
+library(httr)
+library(R6)
+library(jsonlite)
 
 qes.microsvc.type.RISKMODEL <- 1
 qes.microsvc.type.OPTIMIZATION <- 2
@@ -63,40 +64,60 @@ qes.microsvc.OptimizationTemplate <- R6Class(
       self$setup(conn,raw)
     },
     get_target_risk = function() {
-      self$json$target_risk
+      return(self$json$target_risk)
     },
     set_target_risk = function(target_risk) {
       self$json$target_risk <- target_risk
     },
     get_bounds = function() {
-      self$json$bound 
+      c(self$json$lb, self$json$ub)
     },
     set_bounds = function(bounds) {
-      self$json$bound <- bounds
+      self$json$lb <- bounds[1]
+      self$json$ub <- bounds[2]
     },
-    get_max_ADV_participation = function() {
-      self$json$max_ADV_participation
+    set_objective = function(objective) {
+      self$json$objective <- objective
+      return(self)
     },
-    set_max_ADV_participation = function(maxADVPart) {
-      self$json$max_ADV_participation <- maxADVPart 
+    max_ADV_trading_participation = function() {
+      return(self$json$max_ADV_trading_participation)
+    },
+    set_max_ADV_trading_participation = function(maxADVPart) {
+      self$json$max_ADV_trading_participation <- maxADVPart 
+    },
+    max_ADV_holding_participation = function() {
+      return(self$json$max_ADV_holding_participation)
+    },
+    set_max_ADV_holding_participation = function(maxADVPart) {
+      self$json$max_ADV_holding_participation <- maxADVPart 
     },
     get_max_turnover = function() {
-      self$json$max_turnover
+      return(self$json$turnover)
     },
     set_max_turnover = function(turnover) {
       self$json$turnover <- turnover
     },
-    get_gross_weight = function() {
-      self$json$gross_weight
+    set_min_long_weight = function(min_long_weight) {
+      self$json$min_long_weight <- min_long_weight
     },
-    set_gross_weight = function(gross_weight) {
-      self$gross_weight <- gross_weight
+    set_max_long_weight = function(max_long_weight) {
+      self$json$max_long_weight = max_long_weight
     },
-    get_net_weight = function() {
-      self$json$net_weight
+    set_min_short_weight = function(min_short_weight) {
+      self$json$min_short_weight <- min_short_weight
     },
-    set_net_weight = function(net_weight) {
-      self$json$net_weigth <- net_weight
+    set_max_short_weight = function(max_short_weight) {
+      self$json$max_short_weight = max_short_weight
+    },
+    set_min_holding = function(min_holding) {
+      self$json$min_holding = min_holding
+    },
+    set_max_number_securities = function(max_securities) {
+      self$json$limit_number <- max_securities
+    },
+    set_risk_model = function(risk_model_id) {
+      self$json$risk_model <- list(risk_model_id = risk_model_id)
     },
     get_objective = function() {
       self$json$objective
@@ -106,6 +127,37 @@ qes.microsvc.OptimizationTemplate <- R6Class(
     },
     set_benchmark = function(benchmark) {
       self$json$benchmark <- benchmark
+      self$json$use_benchmark <- T
+    },
+    set_use_adv = function(use_adv) {
+      self$json$use_ADV <- use_adv
+    },
+    set_implied_alpha = function(implied_alpha) {
+      self$json$implied_alpha <- implied_alpha
+    },
+    set_lambda = function(lambda) {
+      self$json$lambda <- lambda
+    },
+    set_soft_turnover_penalty = function(soft_turnover_penalty) {
+      self$json$soft_turnover_penalty <- soft_turnover_penalty
+    },
+    set_soft_relative_weight_penalty = function(soft_relative_weight_penalty) {
+      self$json$soft_relative_weight_penalty <- soft_relative_weight_penalty
+    },
+    set_relative_weight_min = function(relative_weight_min) {
+      self$json$relative_weight_min <- relative_weight_min
+    },
+    set_relative_weight_max = function(relative_weight_max) {
+      self$json$relative_weight_max <- relative_weight_max
+    },
+    set_use_tcm = function(use_tcm) {
+      self$json$use_tcm <- use_tcm
+    },
+    set_transaction_model = function(transaction_model) {
+      self$json$transaction_model <- transaction_model
+    },
+    set_trans_cost = function(trans_cost) {
+      self$json$trans_cost <- trans_cost
     }
   )
 )
@@ -194,9 +246,26 @@ qes.microsvc.Conn <- R6Class(
                       encode="json")
       rawToChar(response$content)
     },
-    get = function(svc) {
-      response <- httr::GET(paste0(self$URL,'/',svc),
+    delete = function(endpoint) {
+      response <- httr::DELETE(paste0(self$URL,'/',endpoint),
                              self$.authenticate())
+      rawToChar(response$content)
+    },
+    upload_file = function(endpoint,file, name) {
+      file.1 <- upload_file(file)
+      print(paste0(self$URL,'/',endpoint))
+      response <- POST(paste0(self$URL,'/',endpoint),
+                       body = list(file = file.1,name=name),
+                       self$.authenticate(),
+                       add_headers("Content-Type" = "multipart/form-data"))
+      return(rawToChar(response$content))
+    },
+    .get = function(svc) {
+      response <- httr::GET(paste0(self$URL,'/',svc),
+                            self$.authenticate())
+    },
+    get = function(svc) {
+      response <- self$.get(svc)
       rawToChar(response$content)
     },
     .jobs = function() {
@@ -220,6 +289,21 @@ qes.microsvc.Conn <- R6Class(
     },
     success_job = function(type) {
       subset(self$.jobs(),STATUS == 'SUCCESS' & TYPEID %in% type)
+    },
+    get_template = function(type, name) {
+      v <- fromJSON(self$get(sprintf('template/%s?type=%s',name,type)),simplifyVector = FALSE)
+      if (length(v) > 0) {
+        v <- v[[1]]
+        if (type == qes.microsvc.type.RISKMODEL) {
+          return(qes.microsvc.RiskModelTemplate$new(self,v))
+        } else if (type == qes.microsvc.type.OPTIMIZATION) {
+          return(qes.microsvc.OptimizationTemplate$new(self,v))
+        } else {
+          return(v)
+        }
+      } else {
+        return(NULL)
+      }
     },
     
     templates = function() {
@@ -284,6 +368,22 @@ qes.microsvc.EntitySvc <- R6Class(
     },
     get = function(path) {
       self$conn$get(paste0(self$svc,'/',self$uuid,'/',path))
+    },
+    logs = function() {
+      if (is.null(self$uuid)) {
+        return("No Logs. Either attach an older request or start a new request");
+      }
+      return(self$conn$get(paste0('logs/',self$uuid)))
+    },
+    get_rdata = function(path) {
+      res <- self$conn$.get(paste0(self$svc,'/',self$uuid,'/',path))
+      if (res$status_code == 200) {
+        con = rawConnection(res$content)
+        return(readRDS(gzcon(con)))
+      } else {
+        print(rawToChar(res$content))
+        stop(paste("Failed to get data for ",path))
+      }
     },
     getdf = function(path) {
       content <- self$conn$get(paste0(self$svc,'/',self$uuid,'/',path))
@@ -357,6 +457,9 @@ qes.microsvc.Base <- R6Class(
         stop('No Optimization Associated with the class, either set id or create new optimization request')
       }
       return(self$esvc$wait(max_wait_secs))
+    },
+    logs = function() {
+      return(self$esvc$logs())
     },
     info = function() {
       if (is.null(self$esvc)) {
@@ -455,7 +558,7 @@ qes.microsvc.Optimizer <- R6Class(
   "QESOptimizer",
   inherit = qes.microsvc.Base,
   public = list(
-    req = NULL,
+    req = list(),
     endPoint = "optimization",
     typeid = qes.microsvc.type.OPTIMIZATION,
     initialize = function(conn) {
@@ -476,30 +579,101 @@ qes.microsvc.Optimizer <- R6Class(
              'SUCCESS' = {}
       )
       
-      l1 <- lapply(info$files,self$esvc$getdf)
-      names(l1) <- info$files
-      self$data <- l1
-      return(self$data)
+      files <- info$files
+      if (length(files) == 1) {
+        ix_rdata <- which(endsWith(files,'.RDS'))
+        if (length(ix_rdata) > 0) {
+          return(self$esvc$get_rdata(files[ix_rdata[1]]))
+        }
+      }
+      stop('Failed to find files??')
+      
     },
-    new_request = function(portfolioId, alpha, notional, template,
-                          startDate, endDate, freq,
-                          baseCurrency = "USD",
-                          riskModel = list(universe = portfolioId, template = "default")) {
-      req <- list(
-        portfolio = portfolioId,
-        alpha = alpha,
-        template = template,
-        startDate = startDate,
-        endDate = endDate,
-        notionalValue = notional,
-        baseCurrency = baseCurrency,
-        freq = freq,
-        riskModel = riskModel
-      )
-      self$submit_new_request(req)
+    set_alpha = function(alpha) {
+      self$req <- c(self$req,list(alpha=alpha))
+      return(self)
+    },
+    set_htb_threshold = function(threshold) {
+      self$req <- c(self$req,list(htb_threshold=threshold))
+      return(self)
+    },
+    set_benchmark = function(benchmark) {
+      self$req <- c(self$req,list(benchmark=benchmark))
+      return(self)
+    },
+    set_user_data = function(user_data) {
+      self$req <- c(self$req, list(user_data = list( name=user_data, format = 'rdata')))
+      return(self)
+    },
+    .bound_df = function(f,.min,.max) {
+      data.frame(Factor=f,Min=.min,Max=.max)
+    },
+    set_neutralization_factors = function(neutralization_factors, factor_min_exposure, factor_max_exposure) {
+      self$req <- c(self$req, list(neutralization_factors = 
+                      self$.bound_df(neutralization_factors,factor_min_exposure,factor_max_exposure)))
+      return(self)
+    },
+    set_neutralization_factors_abs = function(neutralization_factors, factor_max_exposure) {
+      self$req <- c(self$req, list(neutralization_factors_abs = 
+                      self$.bound_df(neutralization_factors,0,factor_max_exposure)))
+      return(self)
+    },
+    add_neutralization_matrix = function(neutralization_factors, factor_min_exposure, factor_max_exposure, 
+                                         grouping_matrix = NULL, benchmark=FALSE){
+      self$req <- c(self$req, list(neutralization_matrix = list(bounds = 
+             self$.bound_df(neutralization_factors,factor_min_exposure,factor_max_exposure),
+             benchmark = benchmark,
+             grouping_matrix = grouping_matrix
+             )))
+      return(self)
+      
+    },
+    set_adv_factor = function(adv_factor) {
+      self$req <- c(self$req, list(adv_factor = adv_factor))
+    },
+    submit = function(template) {
+      if (class(template) == 'character') {
+        self$req <- c(self$req,template=template)
+      } else {
+        self$req$template <- template
+      }
+      self$submit_new_request(self$req)
     }
 
   )
 )
 }
+
+qes.microsvc.UserData <- R6Class(
+  classname = "UserDataSvc",
+  public = list(
+    conn1 = NULL,
+    initialize = function(conn1) {
+        self$conn1 <- conn1
+    },
+    upload_file = function(name, file) {
+      return(self$conn1$upload_file(endpoint = sprintf("port/%s",name), 
+                             file = file))
+    },
+    upload_data = function(name, data) {
+      tempfile <- tempfile(pattern = name)
+      saveRDS(data,file=tempfile)
+      print(tempfile)
+      return(self$conn1$upload_file(endpoint = "port", 
+                                    file = tempfile, name = name))
+    },
+    remove_data = function(name) {
+      return(self$conn1$delete(endpoint = sprintf("port/%s",name)))
+    },
+    list_data = function(){
+      ports <- fromJSON(self$conn1$get("port"))
+      
+      ports$Uploaded <- as.POSIXct(ports$Uploaded/1e3, origin = as.Date('1969-12-31'))
+      ports$ID <- NULL
+      return(ports)
+    }
+    
+  )
+)
+
 

@@ -6,8 +6,42 @@
 ## Source the API file
 source('micsvc.R')
 
+
+
 # Setup a connection object 
-conn1 <- qes.microsvc.Conn$new(username = 'hjain', password = 'hjain123')
+conn1 <- qes.microsvc.Conn$new(username = '', password = '')
+
+user_data <- qes.microsvc.UserData$new(conn1)
+user_data$list_data()
+user_data$upload_data(name = 'Software.RData', )
+
+
+res <- conn1$.get(paste0(optimizer$esvc$svc,'/',optimizer$esvc$uuid,'/optResult.RData'))
+
+
+optimizer <- conn1$get_optimizer()
+optimizer$new_request(alpha = 'signal.csv', template = 'default')
+
+optimizer$info()
+optimizer$wait(max_wait_secs = 120)
+
+opt_result <- optimizer$get_data()
+
+
+
+fromJSON(res$info())
+
+res$get('optResult.RData')
+
+
+template <- conn1$get_template(qes.microsvc.type.OPTIMIZATION,'default')
+
+opt_result <- conn1$
+
+
+
+
+
 
 
 # Get instance of risk model builder
