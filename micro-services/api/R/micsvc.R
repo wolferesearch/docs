@@ -6,6 +6,7 @@ library(jsonlite)
 
 qes.microsvc.type.RISKMODEL <- 1
 qes.microsvc.type.OPTIMIZATION <- 2
+qes.microsvc.type.ATTRIBUTION <- 3
 
 
 
@@ -485,14 +486,77 @@ qes.microsvc.Base <- R6Class(
       self$data <- NULL
       
       endPoint <- self$endPoint
+      # print(endPoint)
+      print(req)
       response <- self$conn$post(endPoint,req)
+      # print(response)
+      # print(rawToChar(response$content))
       self$req <- req
       self$esvc <- qes.microsvc.EntitySvc$new(self$conn,endPoint,response)
+    },
+    set_user_data = function(user_data) {
+      self$req <- c(self$req, list(user_data = list( name=user_data, format = 'rdata')))
+      return(self)
+    },
+    get_data = function(file.num = 1) {
+      if (!is.null(self$data)) {
+        return(self$data)
+      }
+      if (is.null(self$esvc)) {
+        stop('No Service Associated with the class, either set id or create new service request')
+      }
+      info <- self$info()
+      switch(info$status,
+             'STARTED' = stop('Service has not completed yet'),
+             'ERROR'   = stop(paste(self$esvc$uuid,' failed with message ==> [', info$message ,']')),
+             'SUCCESS' = {}
+      )
+      
+      files <- info$files
+      #if (length(files) == 1) {
+        ix_rdata <- which(endsWith(files,'.RDS'))
+        if (length(ix_rdata) > 0) {
+          return(self$esvc$get_rdata(files[ix_rdata[file.num]]))
+        }
+      #}
+      stop('Failed to find files??')
     }
     
   )
 )
 }
+
+
+#' qes.microsvc.Attribution
+{
+  qes.microsvc.Attribution <- R6Class(
+    "QESAttribution",
+    inherit = qes.microsvc.Base,
+    public = list(
+      typeid = qes.microsvc.type.ATTRIBUTION,
+      endPoint = "attribution",
+      jobs = NULL,
+      initialize = function(conn) {
+        self$.setConn(conn)
+        #self$.set_latest()
+      },
+      new_request = function(risk_model, port_data) {
+        if (is.null(port_data)) {
+          stop('Port Data Missing')
+        }
+        if (class(port_data) == 'character') {
+          req = list(portfolio = port_data, risk_model = risk_model)    
+        } else {
+          req = list(risk_model = risk_model, 
+                     user_data = list( name = port_data$file, format = 'rdata'),
+                     weightAttribute = port_data$weightAttribute)    
+        }
+        self$submit_new_request(req)
+      }
+    )
+  )
+}
+
 
 #' qes.microsvc.RiskModel
 #' Risk Model Builder Class
@@ -564,31 +628,6 @@ qes.microsvc.Optimizer <- R6Class(
     initialize = function(conn) {
       self$.setConn(conn)
     },
-
-    get_data = function() {
-      if (!is.null(self$data)) {
-        return(self$data)
-      }
-      if (is.null(self$esvc)) {
-        stop('No Optimization Associated with the class, either set id or create new optimization request')
-      }
-      info <- self$info()
-      switch(info$status,
-             'STARTED' = stop('Optimization has not completed yet'),
-             'ERROR'   = stop(paste(self$esvc$uuid,' failed with message ==> [', info$message ,']')),
-             'SUCCESS' = {}
-      )
-      
-      files <- info$files
-      if (length(files) == 1) {
-        ix_rdata <- which(endsWith(files,'.RDS'))
-        if (length(ix_rdata) > 0) {
-          return(self$esvc$get_rdata(files[ix_rdata[1]]))
-        }
-      }
-      stop('Failed to find files??')
-      
-    },
     set_alpha = function(alpha) {
       self$req <- c(self$req,list(alpha=alpha))
       return(self)
@@ -599,10 +638,6 @@ qes.microsvc.Optimizer <- R6Class(
     },
     set_benchmark = function(benchmark) {
       self$req <- c(self$req,list(benchmark=benchmark))
-      return(self)
-    },
-    set_user_data = function(user_data) {
-      self$req <- c(self$req, list(user_data = list( name=user_data, format = 'rdata')))
       return(self)
     },
     .bound_df = function(f,.min,.max) {
