@@ -56,7 +56,11 @@ class Connection:
         :return: requests API uid
         '''
         response = self.session.get(self.URL + '/' + svc)
-        return response.text
+        if response.ok:
+            return response.text
+        else:
+            print("Error when querying ==> [{}]".format(response.text))
+            return None
 
     # getter
     def get_jobs(self):
@@ -67,24 +71,40 @@ class Connection:
     def refresh_jobs(self):
         job_response = self.session.get(self.URL +'/job')
         self.jobs = pd.read_json(job_response.text)
-        self.jobs['STARTTIME'] = self.jobs['STARTTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000))
-        self.jobs['ENDTIME'] = self.jobs['ENDTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000) if not dt else dt)
+        if self.jobs.empty:
+            self.jobs = None
+        else:
+            self.jobs['STARTTIME'] = self.jobs['STARTTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000))
+            self.jobs['ENDTIME'] = self.jobs['ENDTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000) if not dt else dt)
+        return True
+
+    def has_jobs(self):
+        if self.jobs is None:
+            return False
+        if self.jobs.empty:
+            return False
         return True
 
     def failed_jobs(self, type_id):
         '''return list of failed jobs'''
         self.refresh_jobs()
-        return self.jobs[(self.jobs.STATUS == 'FAILED') & (self.jobs.TYPEID == type_id)]
+        if self.has_jobs():
+            return self.jobs[(self.jobs.STATUS == 'FAILED') & (self.jobs.TYPEID == type_id)]
+        else:
+            return None
 
     def success_jobs(self, type_id):
         '''return list of successful jobs'''
         # filter func. to select out successful jobs
         self.refresh_jobs()
-        return self.jobs[(self.jobs.STATUS == 'SUCCESS') & (self.jobs.TYPEID == type_id)]
+        if self.has_jobs():
+            return self.jobs[(self.jobs.STATUS == 'SUCCESS') & (self.jobs.TYPEID == type_id)]
+        else:
+            return None
     
-    def get_template(self, name):
+    def get_template(self, name, type_ = 'Risk-Model'):
         templates = self.templates()
-        templates = templates[templates.NAME == name]
+        templates = templates[(templates.NAME == name) & (templates.TYPE == type_) ]
         if templates.size == 0:
             raise Exception('Template ' + name + 'not found')
         
@@ -109,7 +129,7 @@ class Connection:
     def upload_portfolio(self, id, filename):
         # portfolio argument body
         files={'file': open(filename,'rb')}
-        data={'portfolioName': 'picton_t1'}
+        data={'portfolioName': id}
         return self.session.post(self.URL + '/portfolio', files = files, data = data)
         
 
@@ -132,7 +152,11 @@ class Catalog:
         self.conn = conn
         
     def __as_df__(self,nm):
-        return pd.read_json(self.conn.get(nm))
+        v = self.conn.get(nm)
+        if v:
+            return pd.read_json(v)
+        else:
+            return None
 
     def get_universe(self):
         '''return the list of available universe'''
@@ -153,6 +177,7 @@ class Catalog:
     def get_templates(self):
         '''return the list of API function templates'''
         return self.__as_df__('template')
+    
 
     
 class EdgarFiling:
