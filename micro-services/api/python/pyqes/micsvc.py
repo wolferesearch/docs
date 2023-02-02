@@ -6,13 +6,17 @@ tool functions to facilitate the Microservice API python functionality
 import requests
 import time
 import os
-import datetime
+import tempfile
+from datetime import datetime
 import pandas as pd
 import json
 import io
+import urllib.parse
 
 TYPE_RISKMODEL = 1
 TYPE_OPTIMIZATION = 2
+TYPE_BLACKLITTERMAN = 7
+TYPE_SIMULATOR = 8
 
 class Connection:
     '''
@@ -34,6 +38,11 @@ class Connection:
         session = requests.Session()
         session.auth = (self.username, self.password)
         return session
+
+    def delete(self, endpoint):
+        print(endpoint)
+        response = self.session.delete(self.URL + '/' + endpoint, headers = self.headers)
+        return response.text
 
     def post(self, svc, body):
         '''
@@ -74,8 +83,10 @@ class Connection:
         if self.jobs.empty:
             self.jobs = None
         else:
-            self.jobs['STARTTIME'] = self.jobs['STARTTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000))
-            self.jobs['ENDTIME'] = self.jobs['ENDTIME'].apply(lambda dt: datetime.datetime.fromtimestamp(dt / 1000) if not dt else dt)
+            self.jobs['STARTTIME'] = self.jobs['STARTTIME'].apply(lambda dt: datetime.fromtimestamp(dt / 1000))
+            #self.jobs['ENDTIME'] = self.jobs['ENDTIME'].apply(lambda dt: datetime.fromtimestamp(dt / 1000) if dt is not None else None)
+            #self.jobs = self.jobs.sort_values(by=['STARTTIME'], ascending = False)
+            self.jobs = self.jobs.sort_values(by='STARTTIME', ascending = False)
         return True
 
     def has_jobs(self):
@@ -101,6 +112,11 @@ class Connection:
             return self.jobs[(self.jobs.STATUS == 'SUCCESS') & (self.jobs.TYPEID == type_id)]
         else:
             return None
+
+    def delete_job_data(self, uuids):
+        for uid in uuids:
+            print(self.delete(endpoint = 'job/data/' + uid))
+        return self
     
     def get_template(self, name, type_ = 'Risk-Model'):
         templates = self.templates()
@@ -131,6 +147,9 @@ class Connection:
         files={'file': open(filename,'rb')}
         data={'portfolioName': id}
         return self.session.post(self.URL + '/portfolio', files = files, data = data)
+
+    def user_data(self):
+        return UserData(self)
         
 
     # Functional Method to interact with the inner class
@@ -139,10 +158,21 @@ class Connection:
 
     def get_optimizer(self):
         return Optimizer(self)
+    
+    def get_black_litterman(self):
+        return BlackLitterman(self)
+
+    def get_portsimulator(self):
+        return PortfolioSimulator(self)
 
     def get_catalog(self):
         return Catalog(self)
 
+    def upload_file(self,file_loc, name, end_point = 'port'):
+        print('Calling Uploading {} to {} ...'.format(file_loc, name))
+        response = self.session.post(self.URL + '/' + end_point, files = {'file': open(file_loc,'rb')}, data = {'name': name})
+        print(response.text)
+        return response
 
 class Catalog:
     '''
@@ -178,8 +208,6 @@ class Catalog:
         '''return the list of API function templates'''
         return self.__as_df__('template')
     
-
-    
 class EdgarFiling:
     
     def __init__(self, conn, year, month, day):
@@ -205,8 +233,69 @@ class EdgarFiling:
                 txt = self.get_file(cik=com['CIK'], fiscaldate=com['FISCALDATE'], filing=com['FILING'], file=f)
                 with open('_'.join([com['TICKER'],com['FISCALDATE'],com['FILING'],f]),"w") as f1:
                     f1.write(txt)
-                    
+
+class JobOutput:
     
+    def __init__(self, conn, uuid, files):
+        self.conn = conn
+        self.uuid = uuid
+        self.files = files
+        self.data = {}
+        
+    def _append(self,keys,v,data):
+        key = keys[0]
+        if len(keys) == 1:
+            key = key.split('.')[0]
+            k = key[(key.find('_')+1):len(key)]
+            data[k] = v
+            return data
+            
+        keys.pop(0)
+        child_data = data.get(key)
+
+        if child_data is None:
+            child_data = {}
+
+        data[key] = self._append(keys,v,child_data)
+        
+        return data
+
+    def _get_raw_(self, key):
+        return self.conn.get('job/data/' + self.uuid + '/' + key.replace('/','::'))
+
+    def _fetch(self,key):
+        file = os.path.basename(key) 
+
+        structure = file[:1]
+        data_type = file[1:2]
+
+        content = self._get_raw_(key)
+        data = io.StringIO(content)
+        if structure == 'M': # Matrix
+            return pd.read_csv(data, index_col=0)
+        elif structure == 'V':
+            return pd.read_csv(data, index_col=0)
+        elif structure == 'D':
+            return pd.read_csv(data, index_col=0)
+        elif structure == 'S':
+            val = pd.read_csv(data, index_col=0)
+            val.x.iloc[0]
+            return val
+        else:
+            raise Exception("Unexpected Data Structure Found {}".format(structure))
+    
+    def get_data(self, prefix = None):
+        keys = self.files.Key
+        if prefix is not None:
+            b = [s.startswith(prefix) for s in self.files.Key]
+            keys = keys[b]
+        
+        data = {}
+        for key in keys:
+            v = self._fetch(key)
+            data = self._append(keys = key.split('/'), v= v, data = data)
+        return data
+  
 class EntityService:
     '''
     Entity class to manage for the service
@@ -214,21 +303,36 @@ class EntityService:
     svc: service option
     uuid: generated unique id
     '''
-    def __init__(self, conn, svc, uuid):
+    def __init__(self, conn, svc, uuid, version = 1):
         self.conn = conn
         self.svc = svc
         self.uuid = uuid
+        self.version = version
 
     def info(self):
-        return json.loads(self.conn.get(self.svc+'/'+self.uuid))
+        if self.version == 1:
+            return json.loads(self.conn.get(self.svc+'/'+self.uuid))
+        elif self.version == 2:
+            return json.loads(self.conn.get('job/info' + '/'+self.uuid))
+        else:
+            raise Exception("Unsupported version for info")
 
     @property
     def get_id(self):
         return self.uuid
 
-    def get(self, path):
-        return self.conn.get(self.svc+'/'+self.uuid+'/'+path)
+    def get_logs(self):
+        return self.conn.get('logs/' + self.uuid)
 
+    def get(self, path):
+        if self.version == 1:
+            return self.conn.get(self.svc+'/'+self.uuid+'/'+path)
+        elif self.version == 2:
+            if len(path) > 0:
+                return self.conn.get('job/data/' + self.uuid + '/' + urllib.parse.quote(path))
+            else:
+                return self.conn.get('job/data/' + self.uuid)
+            
     def getdf(self, path):
         content = self.get(path)
         return pd.read_csv(io.StringIO(content), index_col = 0)
@@ -244,6 +348,19 @@ class EntityService:
                 print('function of {} is running for {} seconds'.format(self.svc, ws))
             ws += 5
         return info
+    
+    def get_job_output(self):
+        if self.uuid is None:
+            raise Exception("No UUID attached to the service. Please run a new request or attach an existing UUID")
+        
+        info = self.info()
+        status = info.get('status')
+        if status != 'SUCCESS':
+            raise Exception("The job is not completed, current status ==> [{}]".format(status))
+        
+        content = self.conn.get('job/content/' + self.uuid)
+        content = pd.read_csv(io.StringIO(content))
+        return JobOutput(conn = self.conn, uuid = self.uuid, files = content)
 
 class Template:
     '''
@@ -280,7 +397,6 @@ class Template:
             "Optimization" : "optimization"
         }
         self.conn.post('template/' + typeMap.get(self.type()), self.json)
-
 
 class OptimizerTemplate(Template):
     ''' Optimization Template inherited from the pyqes Template class'''
@@ -359,15 +475,15 @@ class RiskModelTemplate(Template):
         elif shrinkage < 0:
             raise ValueError('Shrinkage cannot be less than 0')
         self.json['options']['spRisk']['shrinkage'] = shrinkage
-
-
+       
 class Base:
     '''
     Base class for Optimizer and Risk Model
     '''
-    def __init__(self):
+    def __init__(self, version = 1):
         self.conn = None
         self.esvc = None
+        self.version = version
 
     # Getter
     def completed(self):
@@ -387,9 +503,11 @@ class Base:
     # Setter
     def set_conn(self, conn):
         self.conn = conn
+
     def set_id(self, uuid):
         self.data = None
-        self.esvc = EntityService(self.conn, self.endPoint, uuid)
+        self.esvc = EntityService(self.conn, self.endPoint, uuid, self.version)
+
     def set_latest(self, k = 0):
         self.jobs = self.completed()
         if self.jobs is None:
@@ -415,10 +533,41 @@ class Base:
         if type(req) == dict:
             req = str(req).replace('\'', '"')
         # call the API and get the respective uuid
-        response = self.conn.post(endPoint, req)
-        self.req = req
-        self.esvc = EntityService(self.conn, endPoint, response)
+        if self.version == 1:
+            response = self.conn.post(endPoint, req)
+        elif self.version == 2:
+            response = self.conn.post('job/submit/' + endPoint, req)
+        else:
+            raise Exception("Unexpected Version {}. Only Version=1/2 are supported.".format(self.version))
 
+        self.req = req
+        self.esvc = EntityService(self.conn, endPoint, response, self.version)
+        return self
+    
+    def get_logs(self):
+        if self.esvc is None:
+            raise Exception("Either attach an existing UUID or run a new one")
+        
+        return self.esvc.get_logs()
+    
+    def get_output(self):
+        if self.esvc is None:
+            raise Exception("Either attach an existing UUID or run a new one")
+        return self.esvc.get_job_output()
+
+    def set_user_data(self, name, data, overwrite = False):
+        user_data = UserData(self.conn)
+        if overwrite or not user_data.exists(name):
+            user_data.upload_data(data,name)
+        self.req['user_data'] = {
+            'format' : 'csv',
+            'name': name
+        }
+        return self
+
+    def submit(self):
+        self.submit_new_request(self.req)
+        return self
 
 '''
 Optimizer class
@@ -429,14 +578,65 @@ Class allows to do the following:
     3.List all optimization (failed/successful)
     4.Download Weights and Summary file
 '''
-
 class Optimizer(Base):
+
     def __init__(self, conn):
+        super().__init__(version = 1)
         self.set_conn(conn)
         self.req = None
+        self.params = {}
         self.endPoint = 'optimization'
         self.typeid = TYPE_OPTIMIZATION
         self.no_request_error_msg = 'No Optimization Associated with the class, either set id or create new optimization request'
+
+    def set_alpha(self, alpha):
+        self.params['alpha'] = alpha
+        return self
+    
+    def set_htb_threshold(self, threshold):
+        self.params['threshold'] = threshold
+        return self
+
+    def set_benchmark(self, benchmark):
+        self.params['benchmark'] = benchmark
+        return self
+    
+    def set_neutralization_factors(self, neutralization_factors, factor_min_exposure, factor_max_exposure):
+        self.params['neutralization_factors'] = {
+            'Factor': neutralization_factors,
+            'Min' : factor_min_exposure,
+            'Max' : factor_max_exposure
+        }
+        return self
+    
+    def set_neutralization_factors_abs(self, neutralization_factors, factor_max_exposure):
+        self.params['neutralization_factors_abs'] = {
+            'Factor': neutralization_factors,
+            'Max' : factor_max_exposure
+        }
+        return self
+
+    def add_neutralization_matrix(self, neutralization_factors, factor_min_exposure, factor_max_exposure,
+                                         grouping_matrix = None, benchmark= False):
+        self.params['neutralization_matrix'] = {
+            'bounds': {
+                 'Factor': neutralization_factors,
+                 'Min' : factor_min_exposure,
+                 'Max' : factor_max_exposure
+            },
+            'benchmark': benchmark,
+            'grouping_matrix': grouping_matrix 
+        }
+        return self
+
+    def set_adv_factor(self, adv_factor):
+        self.params['adv_factor'] = adv_factor
+        return self
+    
+    def submit(self, template):
+        self.params['template'] = template
+        return self.submit_new_request(self.params)
+
 
     def get_data(self):
         '''return a dictionary of function data (Summary, Weight) in pandas DataFrame format'''
@@ -458,6 +658,7 @@ class Optimizer(Base):
             file_name = file_ls.replace('.csv', '')
             data_dic[file_name] = self.esvc.getdf(file)
         return data_dic
+
 
 
     def new_request(self, portfolioId, alpha, notional, template,
@@ -486,10 +687,10 @@ class Optimizer(Base):
         }
         self.submit_new_request(request)
 
-
 class RiskModel(Base):
     '''Risk Model Class'''
     def __init__(self, conn):
+        super().__init__(version = 1)
         self.set_conn(conn)
         self.typeid = TYPE_RISKMODEL
         self.endPoint = 'risk-model'
@@ -542,6 +743,175 @@ class RiskModel(Base):
         }
         self.submit_new_request(request)
 
+class BlackLitterman(Base):
 
+    def __init__(self, conn):
+        super().__init__(version = 2)
+        self.set_conn(conn)
+        self.req = {}
+        self.endPoint = 'black-litterman'
+        self.typeid = TYPE_BLACKLITTERMAN
+        self.no_request_error_msg = 'No Black litterman request associated with the instance. Either run a new one or attach successful UUID'    
 
+    def set_prior_return(self, prior_return, horizon):
+        self.req['prior'] = {
+            'factor': prior_return,
+            'horizon' : horizon
+        }
+        return self
+        
+    def _views_(self):
+        views = self.req.get('views')
+        if views is None:
+            views = []
+            self.req['views'] = views
+        return views
 
+    def _check_exclusive_(self, v1, v2, n1, n2, f1):
+        if v1 is not None and v2 is not None:
+            raise Exception("Cannot Specify {} and {} in the call to {}",n1,n2,f1)
+
+    def add_view_model_scores(self, view_name, model_scores,return_horizon,information_coefficient = None,
+                              information_coefficient_half_life = None,
+                              volatility_adj_scores = False,
+                              uncertainty_kappa_empirical = None,
+                              uncertainty_diagonal_empirical = None
+                              ):
+        view = {
+            'name': view_name,
+            'type': 'factor',
+            'factor': model_scores,
+            'return_horizon': return_horizon
+        }
+        self._check_exclusive_(information_coefficient,information_coefficient_half_life,'information_coefficient','information_coefficient_half_life','add_view_model_scores')
+        if information_coefficient is not None:
+            view['information_coefficient'] = information_coefficient
+        
+        if information_coefficient_half_life is not None:
+            view['information_coefficient_half_life'] = information_coefficient_half_life
+
+        if volatility_adj_scores:
+            view['volatility_adj_scores'] = "TRUE"
+        
+        if not uncertainty_kappa_empirical is None:
+            view['uncertainty_kappa_empirical'] = uncertainty_kappa_empirical
+        
+        if not uncertainty_diagonal_empirical is None:
+            view['uncertainty_diagonal_empirical'] = uncertainty_diagonal_empirical
+        
+        self._views_().append(view)
+        return self
+    
+    def add_view_price_target(self, view_name, price_target,return_horizon, uncertainty_kappa):
+
+        view = {
+            'name': view_name,
+            'type': 'price_target',
+            'factor': price_target,
+            'return_horizon': return_horizon,
+            'uncertainty_kappa': uncertainty_kappa
+        }
+        self._views_().append(view)
+        return self
+    
+    def add_view_buy_sell_rating(self, view_name, buy_sell_rating,return_horizon, information_coefficient,information_coefficient_half_life,
+                volatility_adj_scores, uncertainty_kappa):
+        view = {
+            'name': view_name,
+            'type': 'recommendation',
+            'factor': buy_sell_rating,
+            'return_horizon': return_horizon,
+            'uncertainty_kappa': uncertainty_kappa
+        }
+        self._check_exclusive_(information_coefficient,information_coefficient_half_life,'information_coefficient','information_coefficient_half_life','add_view_buy_sell_rating')
+        if information_coefficient is not None:
+            view['information_coefficient'] = information_coefficient
+        
+        if information_coefficient_half_life is not None:
+            view['information_coefficient_half_life'] = information_coefficient_half_life
+            
+        if volatility_adj_scores:
+            view['volatility_adj_scores'] = "TRUE"
+        if volatility_adj_scores:
+            view['volatility_adj_scores'] = "TRUE"
+
+        self._views_().append(view)
+        return self
+
+class PortfolioSimulator(Base):
+    def __init__(self, conn):
+        super().__init__(version = 2)
+        self.set_conn(conn)
+        self.req = {'options':{}}
+        self.endPoint = 'portsimulator'
+        self.typeid = TYPE_SIMULATOR
+        self.no_request_error_msg = 'No Portfolio Simulation request associated with the instance. Either run a new one or attach successful UUID' 
+
+    def set_capital(self,currency: str, cash: float,notional: float):
+        self.req['currency'] = currency
+        self.req['cash'] = cash
+        self.req['notional'] = notional
+        return self
+
+    def set_weight_factor(self, weight_factor: str):
+        self.req['weightFactor'] = weight_factor
+        return self
+    
+    def set_last_date(self, last_date: str):
+        self.req['last_date'] = last_date
+        return self
+    
+    def set_txn_cost_function(self, function: str):
+        self.req['txn_cost_function'] = function
+        return self
+
+    def set_max_vol_participation(self, max_part: float):
+        self.req['options']['max_participation'] = max_part
+        return self
+
+    def set_grow_notional(self, grow_notional: bool):
+        self.req['options']['grow_notional'] = str(grow_notional)
+        return self
+ 
+class UserData:
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def upload_data(self, file_path_or_data, name):
+        '''
+        Uploads data to user environment
+        Input arguments
+        :param data: Pandas Data frame
+        :param name: Name to associate the data with
+        '''
+        if type(file_path_or_data) == str:
+            file_path = file_path_or_data
+            res = self.connection.upload_file(file_loc = file_path, name = name)
+        else:
+            file_descriptor, file_path = tempfile.mkstemp(suffix='.csv')
+            file_path_or_data.to_csv(path_or_buf=file_path, index=False)
+            res = self.connection.upload_file(file_loc = file_path, name = name)
+            os.unlink(file_path)
+        return res.text
+
+    def list_data(self):
+        v = self.connection.get('port')
+        if v is None:
+            return None
+        v = pd.read_json(v)
+        v.Uploaded = v.Uploaded.apply(lambda x: datetime.fromtimestamp(x / 1e3))
+        v = v.sort_values(by=['Uploaded'], ascending = False)
+        return v
+    
+    def delete_data(self, name):
+        v = self.connection.delete('port/{}'.format(name))
+        return v
+
+    def exists(self,name):
+        df = self.list_data()
+        if df.empty: 
+            return False
+        if sum(df.Name == name) > 0:
+            return True
+        return False
