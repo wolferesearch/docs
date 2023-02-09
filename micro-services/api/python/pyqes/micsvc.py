@@ -16,6 +16,7 @@ import urllib.parse
 TYPE_RISKMODEL = 1
 TYPE_OPTIMIZATION = 2
 TYPE_BLACKLITTERMAN = 7
+TYPE_ATTRIBUTION = 3
 TYPE_SIMULATOR = 8
 
 class Connection:
@@ -165,6 +166,9 @@ class Connection:
     def get_portsimulator(self):
         return PortfolioSimulator(self)
 
+    def get_attribution(self):
+        return Attribution(self)
+
     def get_catalog(self):
         return Catalog(self)
 
@@ -241,6 +245,9 @@ class JobOutput:
         self.uuid = uuid
         self.files = files
         self.data = {}
+
+    def __file__(self, key):
+        return key[(key.find('_')+1):len(key)]
         
     def _append(self,keys,v,data):
         key = keys[0]
@@ -284,6 +291,15 @@ class JobOutput:
         else:
             raise Exception("Unexpected Data Structure Found {}".format(structure))
     
+    def get_keys(self):
+        return [ self.__file__(x) for x in self.files.Key]
+
+    def get_single_data(self, key):
+        keys = self.get_keys()
+        v = self.files.iloc[[k == key for k in keys]]
+        fullkey = v['Key'].iloc[0]
+        return self._fetch(fullkey)
+
     def get_data(self, prefix = None):
         keys = self.files.Key
         if prefix is not None:
@@ -569,6 +585,44 @@ class Base:
         self.submit_new_request(self.req)
         return self
 
+class OptimizerResult:
+
+    def __init__(self, output):
+        self.output = output
+
+    def __get__(self, name):
+        return self.output.get_single_data(name)
+
+    def get_old_weights(self):
+        return self.__get__('old_weights.csv')
+
+    def get_old_weights_2(self):
+        return self.__get__('old_weights_2.csv')
+
+    def get_weights(self):
+        return self.__get__('weights.csv')
+        
+    def get_notional_value(self):
+        return self.__get__('notional_value.csv')
+
+    def get_tracking_error(self):
+        return self.__get__('tracking_error.csv')
+
+    def get_alpha(self):
+        return self.__get__('alpha.csv')
+
+    def get_old_notional_value(self):
+        return self.__get__('old_notional_value.csv')
+
+    def get_required_turnover(self):
+        return self.__get__('required_turnover.csv')
+    
+    def get_risk(self):
+        return self.__get__('risk.csv')
+
+    def get_turnover(self):
+        return self.__get__('turnover.csv')
+
 '''
 Optimizer class
 
@@ -581,36 +635,47 @@ Class allows to do the following:
 class Optimizer(Base):
 
     def __init__(self, conn):
-        super().__init__(version = 1)
+        super().__init__(version = 2)
         self.set_conn(conn)
-        self.req = None
-        self.params = {}
+        self.req = {}
         self.endPoint = 'optimization'
         self.typeid = TYPE_OPTIMIZATION
         self.no_request_error_msg = 'No Optimization Associated with the class, either set id or create new optimization request'
 
-    def set_alpha(self, alpha):
-        self.params['alpha'] = alpha
-        return self
-    
-    def set_htb_threshold(self, threshold):
-        self.params['threshold'] = threshold
+    def set_template(self, template: str):
+        self.req['template'] = template
         return self
 
-    def set_benchmark(self, benchmark):
-        self.params['benchmark'] = benchmark
+    def set_objective(self, objective: str):
+        self.req['objective'] = objective
         return self
     
-    def set_neutralization_factors(self, neutralization_factors, factor_min_exposure, factor_max_exposure):
-        self.params['neutralization_factors'] = {
+    def set_alpha(self, alpha: str):
+        self.req['alpha'] = alpha
+        return self
+
+    def set_adv_factor(self, adv_factor: str):
+        self.req['adv_factor'] = adv_factor
+        return self
+    
+    def set_htb_threshold(self, threshold: float):
+        self.req['threshold'] = threshold
+        return self
+
+    def set_benchmark(self, benchmark: str):
+        self.req['benchmark'] = benchmark
+        return self
+    
+    def set_risk_neutralization_factors(self, neutralization_factors, factor_min_exposure, factor_max_exposure):
+        self.req['neutralization_factors'] = {
             'Factor': neutralization_factors,
             'Min' : factor_min_exposure,
             'Max' : factor_max_exposure
         }
         return self
     
-    def set_neutralization_factors_abs(self, neutralization_factors, factor_max_exposure):
-        self.params['neutralization_factors_abs'] = {
+    def set_risk_neutralization_factors_abs(self, neutralization_factors, factor_max_exposure):
+        self.req['neutralization_factors_abs'] = {
             'Factor': neutralization_factors,
             'Max' : factor_max_exposure
         }
@@ -618,7 +683,7 @@ class Optimizer(Base):
 
     def add_neutralization_matrix(self, neutralization_factors, factor_min_exposure, factor_max_exposure,
                                          grouping_matrix = None, benchmark= False):
-        self.params['neutralization_matrix'] = {
+        self.req['neutralization_matrix'] = {
             'bounds': {
                  'Factor': neutralization_factors,
                  'Min' : factor_min_exposure,
@@ -629,63 +694,94 @@ class Optimizer(Base):
         }
         return self
 
-    def set_adv_factor(self, adv_factor):
-        self.params['adv_factor'] = adv_factor
+    def set_benchmark(self, benchmark:str):
+        self.req['use_benchmark'] = 'TRUE'
+        self.req['benchmark'] = benchmark
+        return self
+
+    def set_bounds(self,lb:float, ub: float):
+        self.req['lb'] = lb
+        self.req['ub'] = ub
+        return self
+
+    def set_target_risk(self, target_risk: float):
+        self.req['target_risk'] = target_risk
+        return self
+
+    def set_max_turnover(self, turnover: float):
+        self.req['max_turnover'] = turnover
+        return self
+
+    def set_max_number_securities(self, max_securities: int):
+        self.req['limit_number'] = max_securities
         return self
     
-    def submit(self, template):
-        self.params['template'] = template
-        return self.submit_new_request(self.params)
+    def set_risk_model(self, risk_model: str):
+        self.req['risk_model'] = {'risk_model_id' : risk_model}
+        return self
+    
+    def set_lambda(self, _lambda: float):
+        self.req['lambda'] = _lambda
+        return self
+    
+    def set_implied_alpha(self, implied_alpha: bool):
+        self.req['implied_alpha'] = str(implied_alpha)
+        return self
 
+    def set_min_holding(self, min_holding: float):
+        self.req['min_holding'] = min_holding
+        return self
 
-    def get_data(self):
-        '''return a dictionary of function data (Summary, Weight) in pandas DataFrame format'''
-        if self.data is not None:
-            return self.data
-        if self.esvc is None:
-            raise ValueError(self.no_request_error_msg)
-        information = self.info()
-        status = information['status']
-        if status == 'STARTED':
-            raise TimeoutError('Optimization has not completed yet')
-        elif status == 'ERROR':
-            raise ConnectionError('{} failed with message ==> [{}]'.format(self.esvc.get_id, information['message']))
-        # access the data with respective file name
-        data_dic = {}
-        file_ls = information['files']
-        for file in file_ls:
-            # argument name
-            file_name = file_ls.replace('.csv', '')
-            data_dic[file_name] = self.esvc.getdf(file)
-        return data_dic
+    def set_min_long_weight(self, min_long_weight: float):
+        self.req['min_long_weight'] = min_long_weight
+        return self
 
+    def set_max_long_weight(self, max_long_weight: float):
+        self.req['max_long_weight'] = max_long_weight
+        return self
 
+    def set_min_short_weight(self, min_short_weight: float):
+        self.req['min_short_weight'] = min_short_weight
+        return self
+    
+    def set_max_short_weight(self, max_short_weight: float):
+        self.req['max_short_weight'] = max_short_weight
+        return self
 
-    def new_request(self, portfolioId, alpha, notional, template,
-                    startDate, endDate, freq, baseCurrency = "USD"):
-        '''call the optimization function with specifying arguments
-        Input arguments
-        :param portfolioId: corresponding id of the portfolio
-        :param alpha:
-        :param notional: notional strategy value
-        :param template:
-        :param startDate:
-        :param endDate:
-        :param freq: trading frequency
-        :param baseCurrency: currency of value
-        '''
-        riskModel = {'universe': portfolioId, 'template': "default"}
-        request = {'portfolioId':portfolioId,
-                   'alpha':alpha,
-                   'template':template,
-                   'startDate':startDate,
-                   'endData':endDate,
-                   'notionalValue':notional,
-                   'baseCurrency':baseCurrency,
-                   'freq':freq,
-                   'riskModel':riskModel
-        }
-        self.submit_new_request(request)
+    def set_use_adv(self, use_adv: bool):
+        self.req['use_adv'] = str(use_adv)
+        return self
+
+    def set_use_tcm(self, use_tcm: bool):
+        self.req['use_tcm'] = str(use_tcm)
+        return self
+    
+    def set_transaction_cost_model(self, transaction_cost_model: str):
+        self.req['transaction_model'] = transaction_cost_model
+        return self
+
+    def set_transaction_cost(slef, transaction_cost: float):
+        self.req['trans_cost'] = transaction_cost
+        return self
+
+    def set_soft_turnover_penalty(self, soft_turnover_penalty: float):
+        self.req['soft_turnover_penalty'] = soft_turnover_penalty
+        return self
+
+    def set_soft_relative_weight_penalty(self, soft_relative_weight_penalty: float):
+        self.req['soft_relative_weight_penalty'] = soft_relative_weight_penalty
+        return self
+
+    def set_relative_weight_min(self, relative_weight_min: float):
+        self.req['relative_weight_min'] = relative_weight_min
+        return self
+
+    def set_relative_weight_max(self, relative_weight_max: float):
+        self.req['relative_weight_max'] = relative_weight_max
+        return self
+
+    def get_results(self):
+        return OptimizerResult(self.get_output())
 
 class RiskModel(Base):
     '''Risk Model Class'''
@@ -838,6 +934,69 @@ class BlackLitterman(Base):
         self._views_().append(view)
         return self
 
+class PortSimulatorOutput:
+    
+    def __init__(self, init_cash, output, data = None):
+        self.output = output
+        self.init_cash = init_cash
+        if data is None:
+            self.data = output.get_data()['result']
+        else:
+            self.data = data['result']
+        dates = list(self.data.keys())
+        dates.sort()
+        self.dates = dates
+        
+    def _v_(self,name):
+        v = pd.concat([self.data[dt][name] for dt in self.dates])
+        v.index = [datetime.strptime(x,'%Y-%m-%d') for x in v.index]
+        return v
+    
+    def _m_(self,name):
+        return pd.concat([self.data[dt][name] for dt in self.dates],axis=1)
+    
+    def cash(self):
+        return self._v_('cash')
+    
+    def shares_traded(self):
+        return self._m_('shares_traded')
+    
+    def shares(self):
+        return self._m_('shares')
+    
+    def short_values(self):
+        return self._v_('short_values')
+    
+    def long_values(self):
+        return self._v_('long_values')
+    
+    def net_values(self):
+        return self.values().add(self.cash())
+    
+    def value_traded(self):
+        return self._m_('value_traded')
+    
+    def next_notional(self):
+        return self._v_('next_notional')
+    
+    def target_notional(self):
+        return self._v_('target_notional')
+    
+    def realized_notional(self):
+        return self._v_('realized_notional')
+    
+    def values(self):
+        return self._v_('values')
+    
+    def exec_price(self):
+        return self._m_('exec_prc')
+
+    def div_payout(self):
+        return self._v_('div_accum')
+    
+    def returns(self):
+        return self.net_values().pct_change()
+
 class PortfolioSimulator(Base):
     def __init__(self, conn):
         super().__init__(version = 2)
@@ -845,11 +1004,13 @@ class PortfolioSimulator(Base):
         self.req = {'options':{}}
         self.endPoint = 'portsimulator'
         self.typeid = TYPE_SIMULATOR
+        self.cash = None
         self.no_request_error_msg = 'No Portfolio Simulation request associated with the instance. Either run a new one or attach successful UUID' 
 
     def set_capital(self,currency: str, cash: float,notional: float):
         self.req['currency'] = currency
         self.req['cash'] = cash
+        self.cash = cash
         self.req['notional'] = notional
         return self
 
@@ -872,7 +1033,93 @@ class PortfolioSimulator(Base):
     def set_grow_notional(self, grow_notional: bool):
         self.req['options']['grow_notional'] = str(grow_notional)
         return self
- 
+
+    def get_results(self):
+        return PortSimulatorOutput(self.cash,self.get_output())
+
+
+class AttributionResult:
+    
+    def __init__(self, output):
+        self.output = output
+        
+    def get_summary(self):
+        return self.output.get_data('MN_summary.csv')['summary']
+    
+    def __get_ts_data__(self, name, _type = 'MN'):
+        return self.output.get_data('ts_data/{}_{}.csv'.format(_type,name))['ts_data'][name]
+    
+    def get_correlation(self):
+        return self.__get_ts_data__('CORRELATION')
+    
+    def get_cum_return_contribution(self):
+        return self.__get_ts_data__('CUM_RETURN_CONTRI')
+        
+    def get_daily_cum_return_contribution(self):
+        return self.__get_ts_data__('DAILY_CUM_RETURN_CONTRI')
+    
+    def get_daily_factor_cum_return(self):
+        return self.__get_ts_data__('DAILY_FACTOR_CUM_RETURN')
+    
+    def get_daily_factor_return(self):
+        return self.__get_ts_data__('DAILY_FACTOR_RETURN')
+    
+    def get_daily_return_contribution(self):
+        return self.__get_ts_data__('DAILY_RETURN_CONTRI')
+    
+    def get_exposures(self):
+        return self.__get_ts_data__('EXPOSURE')
+    
+    def get_factor_cum_return(self):
+        return self.__get_ts_data__('FACTOR_CUM_RETURN')
+    
+    def get_factor_decile(self):
+        return self.__get_ts_data__('FACTOR_DECILE')
+    
+    def get_factor_return(self):
+        return self.__get_ts_data__('FACTOR_RETURN')
+
+    def get_factor_volatility(self):
+        return self.__get_ts_data__('FACTOR_VOL')
+    
+    def get_return_contribution(self):
+        return self.__get_ts_data__('RETURN_CONTRI')
+    
+    def get_risk_contribution(self):
+        return self.__get_ts_data__('RISK_CONTRI')
+    
+    def get_risk_contribution_percentage(self):
+        return self.__get_ts_data__('RISK_CONTRI_PCT')
+    
+    def get_vol_adjusted_exposure(self):
+        return self.__get_ts_data__('VOL_ADJ_EXPOSURE')
+    
+    def get_weight_summary(self):
+        return self.__get_ts_data__('WEIGHT_SUMMARY')
+    
+
+class Attribution(Base):
+    def __init__(self, conn):
+        super().__init__(version = 2)
+        self.set_conn(conn)
+        self.req = {}
+        self.endPoint = 'attribution'
+        self.typeid = TYPE_SIMULATOR
+        self.cash = None
+        self.no_request_error_msg = 'No Attribution request associated with the instance. Either run a new one or attach successful UUID' 
+
+    def set_risk_model(self, risk_model: str):
+        self.req['risk_model'] = risk_model
+        return self
+
+    def set_weight_factor(self, weight_factor = 'WEIGHT'):        
+        self.req['weightAttribute'] = weight_factor
+        return self
+
+    def get_results(self):
+        return AttributionResult(self.get_output())
+
+        
 class UserData:
 
     def __init__(self, connection):
