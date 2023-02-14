@@ -25,7 +25,7 @@ class Connection:
     gets initialized using username and password
     simplify the process to call functional APIs
     '''
-    def __init__(self, username, password, URL = 'https://feed.luoquant.com'):
+    def __init__(self, username = os.environ.get('LQUANT_MICSVC_USER'), password = os.environ.get('LQUANT_MICSVC_PWD'), URL = 'https://feed.luoquant.com'):
         # assign the feature
         self.username = username
         self.password = password
