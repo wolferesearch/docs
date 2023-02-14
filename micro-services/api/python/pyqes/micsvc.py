@@ -571,10 +571,13 @@ class Base:
             raise Exception("Either attach an existing UUID or run a new one")
         return self.esvc.get_job_output()
 
-    def set_user_data(self, name, data, overwrite = False):
+    def set_user_data(self, name, data, overwrite = True):
         user_data = UserData(self.conn)
-        if overwrite or not user_data.exists(name):
-            user_data.upload_data(data,name)
+
+        if not overwrite and user_data.exists(name):
+            raise Exception("Data {} and overwrite is not set. Will not overwrite.".format(name))
+
+        user_data.upload_data(data,name)
         self.req['user_data'] = {
             'format' : 'csv',
             'name': name
