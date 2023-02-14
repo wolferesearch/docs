@@ -954,6 +954,9 @@ class PortSimulatorOutput:
         v = pd.concat([self.data[dt][name] for dt in self.dates])
         v.index = [datetime.strptime(x,'%Y-%m-%d') for x in v.index]
         return v
+
+    def _v2_(self,name):
+        return pd.Series([self.data[dt][name].x.iloc[0] for dt in self.dates], index = self.dates)
     
     def _m_(self,name):
         return pd.concat([self.data[dt][name] for dt in self.dates],axis=1)
@@ -980,13 +983,13 @@ class PortSimulatorOutput:
         return self._m_('value_traded')
     
     def next_notional(self):
-        return self._v_('next_notional')
+        return self._v2_('next_notional')
     
     def target_notional(self):
-        return self._v_('target_notional')
+        return self._v2_('target_notional')
     
     def realized_notional(self):
-        return self._v_('realized_notional')
+        return self._v2_('realized_notional')
     
     def values(self):
         return self._v_('values')
