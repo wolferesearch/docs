@@ -792,6 +792,7 @@ class RiskModel(Base):
         super().__init__(version = 1)
         self.set_conn(conn)
         self.typeid = TYPE_RISKMODEL
+        self.req = {}
         self.endPoint = 'risk-model'
         self.no_request_error_msg = 'Please create a new risk model or attach it to existing by doing set_id'
         self.jobs = None
@@ -802,6 +803,18 @@ class RiskModel(Base):
             raise ValueError(self.no_request_error_msg)
         info = json.loads(self.esvc.get(""))
         return info['dates']
+
+    def add_risk_factors(self, factors):
+        self.req['add_factors'] = factors
+        return self
+
+    def remove_risk_factors(self, factors):
+        self.req['remove_factors'] = factors
+        return self
+
+    def set_template(self, template):
+        self.req['template'] = template
+        return self
 
     def get_data(self, dated):
         info = json.loads(self.esvc.get(dated))
@@ -833,13 +846,16 @@ class RiskModel(Base):
         return True
 
     def new_request(self, universe, template, startDate, endDate, freq):
-        request = {'universe':universe,
-                   'template':template,
-                   'startDate':startDate,
-                   'endDate':endDate,
-                   'freq':freq
+        request = self.req
 
-        }
+        if request.get('user_data') is not None:
+            print('Risk Model API: User data specified, will use dates/frequency from user data')
+        
+        request['universe'] = universe
+        request['template'] = template
+        request['startDate'] = startDate
+        request['endDate'] = endDate
+        request['freq'] = freq
         self.submit_new_request(request)
 
 class BlackLitterman(Base):
