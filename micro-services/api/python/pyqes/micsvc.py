@@ -763,7 +763,7 @@ class Optimizer(Base):
         self.req['transaction_model'] = transaction_cost_model
         return self
 
-    def set_transaction_cost(slef, transaction_cost: float):
+    def set_transaction_cost(self, transaction_cost: float):
         self.req['trans_cost'] = transaction_cost
         return self
 
@@ -1161,7 +1161,12 @@ class UserData:
             file_descriptor, file_path = tempfile.mkstemp(suffix='.csv')
             file_path_or_data.to_csv(path_or_buf=file_path, index=False)
             res = self.connection.upload_file(file_loc = file_path, name = name)
-            os.unlink(file_path)
+            try: # Try to remove the temporary file
+                os.unlink(file_path)
+            except:
+                print("Failed to remote temporary file")
+            
+            
         return res.text
 
     def list_data(self):
