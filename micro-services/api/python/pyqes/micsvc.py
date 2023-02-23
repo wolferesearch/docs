@@ -1052,6 +1052,10 @@ class PortfolioSimulator(Base):
         self.req['options']['max_participation'] = max_part
         return self
 
+    def set_ignore_dividend(self):
+        self.req['options']['ignore_div'] = 'true'
+        return self
+
     def set_grow_notional(self, grow_notional: bool):
         self.req['options']['grow_notional'] = str(grow_notional)
         return self
