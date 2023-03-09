@@ -1061,6 +1061,10 @@ class PortfolioSimulator(Base):
     def set_max_vol_participation(self, max_part: float):
         self.req['options']['max_participation'] = max_part
         return self
+    
+    def use_vwap(self):
+        self.req['options']['use_vwap'] = 'true'
+        return self
 
     def set_ignore_dividend(self):
         self.req['options']['ignore_div'] = 'true'
