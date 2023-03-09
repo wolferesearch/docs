@@ -311,6 +311,13 @@ class JobOutput:
             v = self._fetch(key)
             data = self._append(keys = key.split('/'), v= v, data = data)
         return data
+    
+    def get_user_data(self):
+        user_data = self.get_data(prefix = 'user_data')
+        if user_data:
+            return user_data['user_data']
+        else:
+            return None
   
 class EntityService:
     '''
@@ -1018,6 +1025,9 @@ class PortSimulatorOutput:
     
     def returns(self):
         return self.net_values().pct_change()
+    
+    def get_user_data(self):
+        return self.output.get_user_data()
 
 class PortfolioSimulator(Base):
     def __init__(self, conn):
