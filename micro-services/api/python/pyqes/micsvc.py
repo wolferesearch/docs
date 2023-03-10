@@ -818,6 +818,10 @@ class RiskModel(Base):
     def remove_risk_factors(self, factors):
         self.req['remove_factors'] = factors
         return self
+    
+    def set_grouping(self, grouping_variable_name):
+        self.req['grouping'] = grouping_variable_name
+        return self
 
     def set_template(self, template):
         self.req['template'] = template
