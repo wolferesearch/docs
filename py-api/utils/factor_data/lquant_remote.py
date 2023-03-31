@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import requests
 import json
+import time
 
 class RemoteMatrixData:
     def __init__(self, matrix_data):
@@ -68,10 +69,40 @@ class RemoteFactorData:
         return self.factor_data[key]
 
 class RemoteDataRequest:
-    
-    def __init__(self):
-        self.json = {}
-    
+    """
+    Data Request Object. A convenient class to build the request to send to LQuant remote server
+
+    ...
+
+    Attributes
+    ----------
+    json : dictionary
+        Dictionary with all the parameters for request
+    uuid : str
+        UUID of the request. Only generated when an async request is sent
+    executor : RemoteExecutor
+        Handle to remote executor. Only set when an async request is sent
+
+    Methods
+    -------
+    runFor(universeId)
+        Sets the universe id for the request
+    start(startDate)
+        Sets the start date of data download. Should be YYYY-mm-dd
+    to(endDate)
+        Sets the end date of data download Should be YYYY-mm-dd
+    at(frequency)
+        Frequency of data pull
+    addForwardReturn()
+        Sets the request to add forward return to the data set
+    attr(attributes:list)
+        List of attributes to download
+    """
+    def __init__(self, _async = True):
+        self.json = {"async": str(_async).lower()}
+        self.uuid = None
+        self.executor = None
+
     def runFor(self, universeId: str):
         self.json['universeId'] = universeId
         return self
@@ -84,7 +115,7 @@ class RemoteDataRequest:
         self.json['endTime'] = endDate
         return self
     
-    def at(self, frequency):
+    def at(self, frequency: str):
         self.json['rawFrequency'] = frequency
         return self
     
@@ -92,11 +123,11 @@ class RemoteDataRequest:
         self.json['addForwardReturn'] = True
         return self
     
-    def attr(self, attributes):
+    def attr(self, attributes: list):
         self.json['attributes'] = attributes
         return self
     
-    def outfile(self, outfile):
+    def outfile(self, outfile: str):
         self.json['outfile'] = outfile
         return self
     
@@ -104,17 +135,141 @@ class RemoteDataRequest:
         self.json['weekdaysOnly'] = True
         return self
     
-def execute_remote(URL: str, Key: str, request: RemoteDataRequest):
-    url = "{}/lquant/api/factor/data".format(URL)
-    payload = json.dumps(request.json)
-    headers = {
-        'Auth-Key': '1234',
-        'Content-Type': 'application/json'
-    }
-    response = requests.request("POST", url, headers=headers, data=payload)
-    if response.ok:
-        data = json.loads(response.content.decode('ascii'))
-        data = data[list(data.keys())[0]]
-        return RemoteFactorData(data)
-    else:
-        raise Exception("Error occurred == {}".format(response.content.decode('ascii')))
+    def sync(self):
+        self.json['async'] = "false"
+        return self
+    
+    def is_async(self):
+        if "true" == self.json['async']:
+            return True
+        _format = self.json['format']
+        if _format is None:
+            return True
+        return _format == 'json'
+    
+    def set_output_json(self):
+        self.json['format'] = 'json'
+        return self
+    
+    def _fn_(self,fn):
+        return "{}/uuid/{}".format(fn, self.uuid)
+    
+    def status(self, check_error = False):
+        status = self.executor._remote_("GET",self._fn_('status'))
+        if check_error:
+            if status['status'] == 'error':
+                raise Exception("Service Returned an error ==> {}".format(status['error']))
+        return status
+
+    def get_data(self):
+        return self.executor._remote_("GET",self._fn_('get'))
+
+    def cancel(self):
+        return self.executor._remote_("DELETE",self._fn_('cancel'))
+
+    def delete(self):
+        return self.executor._remote_("DELETE",self._fn_('delete'))
+
+    def is_completed(self):
+        status = self.status(check_error = True)
+        return status['status'] == 'completed'
+
+    def is_cancelled(self):
+        status = self.status(check_error = True)
+        return status['status'] == 'cancelled'
+
+    def download(self, outfile):
+        if self.uuid is  None:
+            raise Exception("Request is not associated with a UUID. Please provide a valid request object")
+        return self.executor._download_("download/uuid/{}".format(self.uuid), outfile)
+
+    def execute(self):
+        if self.executor is None:
+            raise Exception("Executor is not set, create a new object from executor")
+        return self.executor.execute(self)
+    
+    def wait(self, max_time = 1200, sleep = 60):
+        total_sleep = 0
+        while not self.is_completed() and total_sleep < max_time:
+            time.sleep(sleep)
+            max_time = max_time + sleep
+        return self.is_completed()
+    
+class RemoteExecutor:
+    """
+    Remote Executor class to interact with the Remote API
+
+    ...
+
+    Attributes
+    ----------
+    URL : str
+        URL of the Remote Server
+    Key : str
+        API Key
+
+    Methods
+    -------
+    execute(request: RemoteDataRequest)
+        Executes a data download request on the server
+    list_jobs()
+        List down UUID for all remote jobs
+    """
+
+
+    def __init__(self, URL: str, Key: str):
+        self.URL = URL
+        self.Key = Key
+        self.header = self._header_()
+
+    def _header_(self):
+        return {
+            'Auth-Key': self.Key,
+            'Content-Type': 'application/json'
+        }
+    
+    def _url_(self,endpoint):
+        return "{}/lquant/api/{}".format(self.URL,endpoint)
+        
+    def _download_(self,endpoint,outfile):
+        response = requests.get(url = self._url_(endpoint), allow_redirects = True, headers = self.header)
+        with open(outfile, 'wb') as f:
+            f.write(response.content)
+        return True
+        
+    def _remote_(self, method, endpoint, payload = None):
+        response = requests.request(method, self._url_(endpoint), headers=self.header, data=payload)
+        if response.ok:
+            return json.loads(response.content.decode('ascii'))
+        else:
+            raise Exception("Error occurred == {}".format(response.content.decode('ascii')))
+    
+    def execute(self, request: RemoteDataRequest):
+        """
+            Executes a data request
+            
+            Params
+            __________
+            
+        """
+        if request.uuid is not None:
+            raise Exception("Request is already associated with a UUID. Please create a new request")
+        
+        data = self._remote_(method = 'POST', endpoint = 'factor/data', payload = json.dumps(request.json))
+        
+        if request.is_async():
+            request.uuid = data['uuid']
+            request.executor = self
+            return request
+        else:
+            data = data[list(data.keys())[0]]
+            return RemoteFactorData(data)
+        
+        
+    def list_jobs(self):
+        return self._remote_(method = 'GET', endpoint = 'list/uuid')
+
+    def new_request(self):
+        request = RemoteDataRequest() 
+        request.executor = self
+        return request
