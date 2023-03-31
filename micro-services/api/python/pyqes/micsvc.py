@@ -1159,6 +1159,10 @@ class Attribution(Base):
     def set_weight_factor(self, weight_factor = 'WEIGHT'):        
         self.req['weightAttribute'] = weight_factor
         return self
+    
+    def set_last_date(self, last_date: str):
+        self.req['last_date'] = last_date
+        return self
 
     def get_results(self):
         return AttributionResult(self.get_output())
