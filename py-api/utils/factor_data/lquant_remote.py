@@ -145,7 +145,7 @@ class RemoteDataRequest:
         _format = self.json['format']
         if _format is None:
             return True
-        return _format == 'json'
+        return _format != 'json'
     
     def set_output_json(self):
         self.json['format'] = 'json'
