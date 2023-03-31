@@ -160,8 +160,19 @@ class RemoteDataRequest:
             if status['status'] == 'error':
                 raise Exception("Service Returned an error ==> {}".format(status['error']))
         return status
+    
+    def is_ok(self):
+        if self.uuid is  None:
+            raise Exception("Request is not associated with a UUID. Please provide a valid request object")
+        status = self.status()
+        if status['status'] != 'completed':
+            raise Exception("Cannot download and the job is not completed")
+        if status['completed'] != 'true':
+            raise Exception("Error occurred while running the job ==> {}".format(status['completed']))
+        return True
 
     def get_data(self):
+        self.is_ok()
         return self.executor._remote_("GET",self._fn_('get'))
 
     def cancel(self):
@@ -177,10 +188,13 @@ class RemoteDataRequest:
     def is_cancelled(self):
         status = self.status(check_error = True)
         return status['status'] == 'cancelled'
+    
+    def is_error(self):
+        status = self.status(check_error = True)
+        return status['status'] == 'completed' and status['completed'] != 'true'
 
     def download(self, outfile):
-        if self.uuid is  None:
-            raise Exception("Request is not associated with a UUID. Please provide a valid request object")
+        self.is_ok()
         return self.executor._download_("download/uuid/{}".format(self.uuid), outfile)
 
     def execute(self):
@@ -188,11 +202,11 @@ class RemoteDataRequest:
             raise Exception("Executor is not set, create a new object from executor")
         return self.executor.execute(self)
     
-    def wait(self, max_time = 1200, sleep = 60):
+    def wait(self, max_time = 1200, sleep = 10):
         total_sleep = 0
         while not self.is_completed() and total_sleep < max_time:
             time.sleep(sleep)
-            max_time = max_time + sleep
+            total_sleep = total_sleep + sleep
         return self.is_completed()
     
 class RemoteExecutor:
