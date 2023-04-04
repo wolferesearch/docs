@@ -238,12 +238,22 @@ class EdgarFiling:
                 with open('_'.join([com['TICKER'],com['FISCALDATE'],com['FILING'],f]),"w") as f1:
                     f1.write(txt)
 
+class MappedUserData:
+    def __init__(self, user_data):
+        self.user_data = user_data
+
+    def get_data(self, dated):
+        v = pd.DataFrame([self.user_data[x][dated] for x in self.user_data.keys()]).T
+        v.columns = list(self.user_data.keys())
+        return v
+    
 class JobOutput:
     
     def __init__(self, conn, uuid, files):
         self.conn = conn
         self.uuid = uuid
         self.files = files
+        self.udata = None
         self.data = {}
 
     def __file__(self, key):
@@ -313,9 +323,13 @@ class JobOutput:
         return data
     
     def get_user_data(self):
+        if self.udata is not None:
+            return self.udata
+        
         user_data = self.get_data(prefix = 'user_data')
         if user_data:
-            return user_data['user_data']
+            self.udata = MappedUserData(user_data['user_data'])
+            return self.udata
         else:
             return None
   
@@ -594,6 +608,7 @@ class Base:
     def submit(self):
         self.submit_new_request(self.req)
         return self
+    
 
 class OptimizerResult:
 
@@ -632,6 +647,17 @@ class OptimizerResult:
 
     def get_turnover(self):
         return self.__get__('turnover.csv')
+    
+    def get_portfolio(self, dated):
+        user_data = self.output.get_user_data()
+        df = user_data.get_data(dated)
+        weights = self.get_weights()[[dated]]
+        weights.columns = ['WEIGHT']
+        return pd.merge(df, weights, left_index=True, right_index=True)
+        
+        
+
+
 
 '''
 Optimizer class
@@ -676,7 +702,82 @@ class Optimizer(Base):
         self.req['benchmark'] = benchmark
         return self
     
+    def set_init_portfolio(self, init_portfolio: str):
+        self.req['init_portfolio'] = init_portfolio
+        return self
+    
+    def add_group_constraint(self, grouping_factor: str, min_exposure: float, max_exposure: float, benchmark: bool):
+        """Add Group Constraints to the optimization. 
+        
+        This ensures that within the Group the aggregate exposure is within the bounds. For when the benchmark is selected
+
+        Parameters
+        ----------
+        grouping_factor: str
+            Name of the factor to put constraint on. For GICS factors, please use GICS1, GICS2, GICS3, GICS4
+        min_exposure: float
+            Minimum Exposure for each of the group
+        max_exposure: float
+            Maximum Exposure for each of the group
+        benchmark: bool
+            Boolean indicator if the exposure should be relative to the benchmark
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+        group_constraints = self.req.get('group_constraints')
+        if group_constraints is None:
+            group_constraints = []
+            self.req['group_constraints'] = group_constraints
+        group_constraints.append({'factor': grouping_factor, 'min' : min_exposure, 'max': max_exposure, 'benchmark' :str(benchmark)})
+        return self
+
+    def add_stock_bounds(self, lb: str, ub: str, benchmark: bool):
+        """Add Stock by Stock bounds
+
+        Sets the lower bound and upper bound for the portfolio holdings
+
+        Parameters
+        ----------
+        lb: str
+            Column corresponding to the lower bound
+        ub: str
+            Column corresponding to the upper bound
+        benchmark: bool
+            Boolean indicator if the bound should be relative to the benchmark weight
+        """
+        bounds = self.req.get('bounds')
+        if bounds is None:
+            bounds = {}
+            self.req['bounds'] = bounds
+        
+        if benchmark:
+            bounds['relative'] = {'lb': lb, 'ub': ub}
+        else:
+            bounds['absolute'] = {'lb': lb, 'ub': ub}
+        return self
+    
+    def set_abs_risk(self):
+        """Sets risk to absolute risk instead of trcking error
+        """
+        self.req['abs_risk'] = 'true'
+        return self
+    
     def set_risk_neutralization_factors(self, neutralization_factors, factor_min_exposure, factor_max_exposure):
+        """Controls exposure corresponding to risk factors
+        
+        Parameters
+        ----------
+        neutralization_factors: list [str]
+            List of neutralization factors. This should be referenced in the risk model. 
+        factor_min_exposure: float
+            Minimum exposure for the risk factor
+        factor_max_exposure: float
+            Maximum exposure for the risk factor
+        
+        """
         self.req['neutralization_factors'] = {
             'Factor': neutralization_factors,
             'Min' : factor_min_exposure,
@@ -685,6 +786,16 @@ class Optimizer(Base):
         return self
     
     def set_risk_neutralization_factors_abs(self, neutralization_factors, factor_max_exposure):
+        """Controls absolute exposure corresponding to risk factors
+        
+        Parameters
+        ----------
+        neutralization_factors: list [str]
+            List of neutralization factors. This should be referenced in the risk model. 
+        factor_min_exposure: float
+            Minimum exposure for the risk factor
+        
+        """
         self.req['neutralization_factors_abs'] = {
             'Factor': neutralization_factors,
             'Max' : factor_max_exposure
@@ -693,6 +804,22 @@ class Optimizer(Base):
 
     def add_neutralization_matrix(self, neutralization_factors, factor_min_exposure, factor_max_exposure,
                                          grouping_matrix = None, benchmark= False):
+        """Controls  exposure corresponding to custom factors 
+        
+        Parameters
+        ----------
+        neutralization_factors: list [str]
+            List of neutralization factors. This should be referenced in the risk model. 
+        factor_min_exposure: float
+            Minimum exposure for the custom factor
+        factor_max_exposure: float
+            Maximum exposure for the custom factor
+        grouping_matrix: str
+            Control exposure at each group level. Default can be none so entire universe is kept in one group
+        benchmark: bool
+            Boolean indicator when set the exposure are computed relative to the benchmark
+        
+        """
         self.req['neutralization_matrix'] = {
             'bounds': {
                  'Factor': neutralization_factors,
