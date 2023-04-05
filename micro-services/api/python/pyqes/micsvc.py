@@ -54,7 +54,7 @@ class Connection:
         '''
         # convert body into valid json string if dictionary type
         if type(body) == dict:
-            body = str(body).replace('\'', '"')
+            body = json.dumps(body,separators=(',', ':'))
         response = self.session.post(self.URL + '/' + svc,
                                 data = body, headers = self.headers)
         return response.text
@@ -567,8 +567,8 @@ class Base:
         self.esvc = None
         self.data = None
         endPoint = self.endPoint   # service argument
-        if type(req) == dict:
-            req = str(req).replace('\'', '"')
+        # if type(req) == dict:
+        #     req = str(req).replace('\'', '"')
         # call the API and get the respective uuid
         if self.version == 1:
             response = self.conn.post(endPoint, req)
@@ -577,7 +577,7 @@ class Base:
         else:
             raise Exception("Unexpected Version {}. Only Version=1/2 are supported.".format(self.version))
 
-        self.req = req
+        # self.req = req
         self.esvc = EntityService(self.conn, endPoint, response, self.version)
         return self
     
@@ -846,7 +846,7 @@ class Optimizer(Base):
         return self
 
     def set_max_turnover(self, turnover: float):
-        self.req['max_turnover'] = turnover
+        self.req['turnover'] = turnover
         return self
 
     def set_max_number_securities(self, max_securities: int):
@@ -994,7 +994,8 @@ class RiskModel(Base):
         request['startDate'] = startDate
         request['endDate'] = endDate
         request['freq'] = freq
-        self.submit_new_request(request)
+        self.req = request
+        return self.submit_new_request(request)
 
 class BlackLitterman(Base):
 
