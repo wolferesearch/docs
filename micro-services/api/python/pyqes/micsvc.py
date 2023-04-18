@@ -706,7 +706,8 @@ class Optimizer(Base):
         self.req['init_portfolio'] = init_portfolio
         return self
     
-    def add_group_constraint(self, grouping_factor: str, min_exposure: float, max_exposure: float, benchmark: bool):
+    def add_group_constraint(self, grouping_factor: str, min_exposure: float, max_exposure: float, benchmark: bool, 
+                             transformation = None):
         """Add Group Constraints to the optimization. 
         
         This ensures that within the Group the aggregate exposure is within the bounds. For when the benchmark is selected
@@ -721,6 +722,8 @@ class Optimizer(Base):
             Maximum Exposure for each of the group
         benchmark: bool
             Boolean indicator if the exposure should be relative to the benchmark
+        transformer: dictionary
+            Transformer function to convert the grouping_factor to categorical function. For example {'transformer':'binner',bins:[100,1000,10000,100000]}
 
         Returns
         -------
@@ -731,7 +734,8 @@ class Optimizer(Base):
         if group_constraints is None:
             group_constraints = []
             self.req['group_constraints'] = group_constraints
-        group_constraints.append({'factor': grouping_factor, 'min' : min_exposure, 'max': max_exposure, 'benchmark' :str(benchmark)})
+        group_constraints.append({'factor': grouping_factor, 'min' : min_exposure, 'max': max_exposure, 'benchmark' :str(benchmark), 
+                                  'factor_tranformer': transformation})
         return self
 
     def add_stock_bounds(self, lb: str, ub: str, benchmark: bool):
