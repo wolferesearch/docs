@@ -824,7 +824,11 @@ class Optimizer(Base):
             Boolean indicator when set the exposure are computed relative to the benchmark
         
         """
-        self.req['neutralization_matrix'] = {
+        neut_matrix = self.req['neutralization_matrix']
+        if neut_matrix is None:
+            neut_matrix = []
+
+        neut_matrix.append({
             'bounds': {
                  'Factor': neutralization_factors,
                  'Min' : factor_min_exposure,
@@ -832,7 +836,8 @@ class Optimizer(Base):
             },
             'benchmark': benchmark,
             'grouping_matrix': grouping_matrix 
-        }
+        })
+        self.req['neutralization_matrix'] = neut_matrix
         return self
 
     def set_benchmark(self, benchmark:str):
