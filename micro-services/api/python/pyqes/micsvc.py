@@ -1103,30 +1103,53 @@ class BlackLitterman(Base):
 
 class PortSimulatorOutput:
     
-    def __init__(self, init_cash, output, data = None):
+    def __init__(self, init_cash, output, data = None, version = 1):
         self.output = output
         self.init_cash = init_cash
+        self.version = version
         if data is None:
             self.data = output.get_data()['result']
         else:
             self.data = data['result']
-        dates = list(self.data.keys())
-        dates.sort()
+        
+        if version == 2:
+            dates = list(self.data['dates'].x)
+        else:
+            dates = list(self.data.keys())
+            dates.sort()
         self.dates = dates
+        self.include_interest = True
+        self.include_shorting_fees = True
         
     def _v_(self,name):
-        v = pd.concat([self.data[dt][name] for dt in self.dates])
-        v.index = [datetime.strptime(x,'%Y-%m-%d') for x in v.index]
+        if self.version == 2:
+            v = self.data[name]
+        else:
+            v = pd.concat([self.data[dt][name] for dt in self.dates])
+            
+        if type(v.index[1]) == str:
+            v.index = [datetime.strptime(x,'%Y-%m-%d') for x in v.index]
         return v
 
     def _v2_(self,name):
+        if self.version == 2:
+            return self._v_(name)
         return pd.Series([self.data[dt][name].x.iloc[0] for dt in self.dates], index = self.dates)
     
     def _m_(self,name):
-        return pd.concat([self.data[dt][name] for dt in self.dates],axis=1)
+        if self.version == 2:
+            return self.data[name] 
+        else:
+            return pd.concat([self.data[dt][name] for dt in self.dates],axis=1)
     
     def cash(self):
         return self._v_('cash')
+    
+    def earned_interest(self):
+        return self._v_('earned_interest')
+    
+    def shorting_fees(self):
+        return self._v_('shorting_fees')
     
     def shares_traded(self):
         return self._m_('shares_traded')
@@ -1141,7 +1164,12 @@ class PortSimulatorOutput:
         return self._v_('long_values')
     
     def net_values(self):
-        return self.values().add(self.cash())
+        vals = self.values().add(self.cash())
+        if self.include_interest:
+            vals = vals.add(self.earned_interest())
+        if self.include_shorting_fees:
+            vals = vals.add(-self.shorting_fees())
+        return vals
     
     def value_traded(self):
         return self._m_('value_traded')
@@ -1174,7 +1202,7 @@ class PortfolioSimulator(Base):
     def __init__(self, conn):
         super().__init__(version = 2)
         self.set_conn(conn)
-        self.req = {'options':{}}
+        self.req = {'options':{},'serialization_version':2}
         self.endPoint = 'portsimulator'
         self.typeid = TYPE_SIMULATOR
         self.cash = None
@@ -1216,7 +1244,9 @@ class PortfolioSimulator(Base):
         return self
 
     def get_results(self):
-        return PortSimulatorOutput(self.cash,self.get_output())
+        return PortSimulatorOutput(init_cash = self.cash,output = self.get_output(), 
+                                   data = None,
+                                   version = self.req['serialization_version'])
 
 
 class AttributionResult:
