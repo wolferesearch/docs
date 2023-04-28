@@ -862,6 +862,10 @@ class Optimizer(Base):
         self.req['limit_number'] = max_securities
         return self
     
+    def set_min_number_securities(self, min_securities: int):
+        self.req['min_number'] = min_securities
+        return self
+    
     def set_risk_model(self, risk_model: str):
         self.req['risk_model'] = {'risk_model_id' : risk_model}
         return self
