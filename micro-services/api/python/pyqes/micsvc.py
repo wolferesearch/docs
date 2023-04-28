@@ -824,7 +824,7 @@ class Optimizer(Base):
             Boolean indicator when set the exposure are computed relative to the benchmark
         
         """
-        neut_matrix = self.req['neutralization_matrix']
+        neut_matrix = self.req.get('neutralization_matrix')
         if neut_matrix is None:
             neut_matrix = []
 
