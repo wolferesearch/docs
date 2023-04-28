@@ -1223,6 +1223,10 @@ class PortfolioSimulator(Base):
         self.req['last_date'] = last_date
         return self
     
+    def set_funding_spread(self, spread: float):
+        self.req['funding_spread'] = spread
+        return self
+    
     def set_txn_cost_function(self, function: str):
         self.req['txn_cost_function'] = function
         return self
