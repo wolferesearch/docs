@@ -20,11 +20,17 @@ TYPE_ATTRIBUTION = 3
 TYPE_SIMULATOR = 8
 
 class Connection:
-    '''
-    Connenection Class
-    gets initialized using username and password
-    simplify the process to call functional APIs
-    '''
+    """
+    Connenection Class gets initialized using username and password simplify the process to call functional APIs.
+    This is a gateway class, so it allows you to access other services, such as
+
+    1. Optimizer
+    2. Risk Model Builder
+    3. Attribution
+    4. Black Litterman
+    5. Portfolio Simulator
+
+    """
     def __init__(self, username = os.environ.get('LQUANT_MICSVC_USER'), password = os.environ.get('LQUANT_MICSVC_PWD'), URL = 'https://feed.luoquant.com'):
         # assign the feature
         self.username = username
@@ -151,7 +157,6 @@ class Connection:
 
     def user_data(self):
         return UserData(self)
-        
 
     # Functional Method to interact with the inner class
     def get_risk_model_builder(self):
@@ -179,9 +184,9 @@ class Connection:
         return response
 
 class Catalog:
-    '''
+    """
     Catalog Class to browse universes, factors and templates
-    '''
+    """
     def __init__(self, conn):
         self.conn = conn
         
@@ -248,7 +253,15 @@ class MappedUserData:
         return v
     
 class JobOutput:
-    
+    """
+    Job Output wrapper. Usually returned by the child class of     :class:`~pyqes.micsvc.Base`
+
+     Class allows to do the following:\n
+         1. Get the raw output of the job.\n
+         2. Gets the user data associated with the job\n
+
+    """
+
     def __init__(self, conn, uuid, files):
         self.conn = conn
         self.uuid = uuid
@@ -334,12 +347,10 @@ class JobOutput:
             return None
   
 class EntityService:
-    '''
-    Entity class to manage for the service
-    conn: connection object to interact with the server
-    svc: service option
-    uuid: generated unique id
-    '''
+    """
+    Entity class to manage for the service. Usually managed by :class:`~pyqes.micsvc.Base`
+
+    """
     def __init__(self, conn, svc, uuid, version = 1):
         self.conn = conn
         self.svc = svc
@@ -514,9 +525,16 @@ class RiskModelTemplate(Template):
         self.json['options']['spRisk']['shrinkage'] = shrinkage
        
 class Base:
-    '''
-    Base class for Optimizer and Risk Model
-    '''
+    """
+     Base class for Optimizer/RiskModel/Attribution/Black Litterman job runners.
+
+     Class allows to do the following:\n
+         1. Check status of the job.
+         2. Get Info about the job, i.e, Start Time End Time etc\n
+         3. Get output for the job. The child class wraps the output object\n
+         4. Get logs for the job\n
+         
+     """
     def __init__(self, version = 1):
         self.conn = None
         self.esvc = None
@@ -524,17 +542,46 @@ class Base:
 
     # Getter
     def completed(self):
+        """Get list of completed job for this type of jobs.
+
+        Returns
+        -------
+        Jobs as Pandas data frame
+        """
+
         self.check_conn() # Check for connection first
         return self.conn.success_jobs(self.typeid)
+
     def failed(self):
+        """Get list of failed job for this type of jobs.
+
+        Returns
+        -------
+        Jobs as Pandas data frame
+        """
+
         self.check_conn()
         return self.conn.failed_jobs(self.typeid)
+
     def info(self):
-        '''return the API specific service information'''
+        """Gets info as dictionary of the runner
+
+       Returns: dict
+       -------
+       Dictionary. Information about the job.
+       """
+
         if self.esvc is None:
             raise ValueError('Please create a new {} or attach it to existing by doing set_id'.format(self.endPoint))
         return json.loads(json.dumps(self.esvc.info()))
+
     def status(self):
+        """Gets status of the job. Completed/Started/Error
+
+       Returns: str
+       -------
+       String. Status of the job
+       """
         return self.info()['status']
 
     # Setter
@@ -542,6 +589,17 @@ class Base:
         self.conn = conn
 
     def set_id(self, uuid):
+        """Sets UUID for a previously run. Useful when trying to fetch data for a previously run job
+
+        Parameters
+        ----------
+        uuid: str
+            UUID. Unique identifier for the job.
+       Returns: None
+       -------
+
+       """
+
         self.data = None
         self.esvc = EntityService(self.conn, self.endPoint, uuid, self.version)
 
@@ -559,11 +617,32 @@ class Base:
             raise ValueError('Please create a connection first using set_conn method.')
             
     def wait(self, max_wait_secs):
+        """Waits for job to finish.
+
+        Parameters
+        ----------
+        max_wait_secs: int
+            Maximum wait time.
+       Returns:
+       -------
+       Entity Service Class
+       """
+
         if self.esvc is None:
             raise ValueError('No Optimization Associated with the class, either set id or create new optimization request')
         return self.esvc.wait(max_wait_secs)
     
     def submit_new_request(self, req):
+        """Submits the job.
+
+        Parameters
+        ----------
+        req: dict
+            Request object with parameters
+       Returns: self
+       -------
+       Instance of the job runner class.
+       """
         self.esvc = None
         self.data = None
         endPoint = self.endPoint   # service argument
@@ -582,6 +661,12 @@ class Base:
         return self
     
     def get_logs(self):
+        """Gets logs associated with the job
+
+       Returns: str
+       -------
+       Logs as a string
+       """
         if self.esvc is None:
             raise Exception("Either attach an existing UUID or run a new one")
         
@@ -593,6 +678,22 @@ class Base:
         return self.esvc.get_job_output()
 
     def set_user_data(self, name, data, overwrite = True):
+        """Get a pandas data frame with User data and Optimized Weights for a single date
+
+        Parameters
+        ----------
+        name: str
+            Name to identify the portfolio
+        data: `panda.DataFrame`
+            Pandas data frame with Identifier, Date, Metrics
+        overwrite: bool
+            Boolean flag if the data should be overwritten
+
+
+       Returns
+       -------
+       Returns object of the job runner
+       """
         user_data = UserData(self.conn)
 
         if not overwrite and user_data.exists(name):
@@ -611,7 +712,16 @@ class Base:
     
 
 class OptimizerResult:
+    """
+    Optimizer Result Class
 
+    Class allows to do the following:\n
+        1. Inspect optimized weight matrix.
+        2. Inspect the turnover\n
+        3. Inspect the notional and returns\n
+        4. Get portfolio on a date\n
+        5.Uploads custom data
+    """
     def __init__(self, output):
         self.output = output
 
@@ -625,51 +735,111 @@ class OptimizerResult:
         return self.__get__('old_weights_2.csv')
 
     def get_weights(self):
+        """Gets the Weight of the optimization portfolio. This will return a matrix with
+        security ids in rows and dates in columns
+
+        Returns
+        -------
+        Pandas data matrix with security in rows and dates in column
+
+        """
         return self.__get__('weights.csv')
         
     def get_notional_value(self):
+        """Gets the notional value of the portfolio. This will be a time series of float.
+
+        Returns
+        -------
+        Pandas data series with dates as rows and one column
+        """
         return self.__get__('notional_value.csv')
 
     def get_tracking_error(self):
+        """Gets the tracking error as time series. Only available when benchmark is set
+
+       Returns
+       -------
+       Pandas data series with dates as rows and one column with tracking error
+       """
         return self.__get__('tracking_error.csv')
 
     def get_alpha(self):
+        """Gets the ex-ante alpha score. This is computed by taking the inner product of weight and alpha vectors
+        on each date.
+
+       Returns
+       -------
+       Pandas data series with dates as rows and one column with alpha
+       """
         return self.__get__('alpha.csv')
 
     def get_old_notional_value(self):
         return self.__get__('old_notional_value.csv')
 
     def get_required_turnover(self):
+        """Gets the required (minimum) turnover. This is based on the constraints for new portfolio compare to
+        the previous portfolio prior to rebalance
+
+       Returns
+       -------
+       Pandas data series with dates as rows and one column with required turnover
+       """
+
         return self.__get__('required_turnover.csv')
     
     def get_risk(self):
+        """Gets the ex-ante risk of the strategy as time series.
+
+       Returns
+       -------
+       Pandas data series with dates as rows and one column with ex-ante risk
+       """
+
         return self.__get__('risk.csv')
 
     def get_turnover(self):
+        """Gets the turnover of the strategy as time series.
+
+       Returns
+       -------
+       Pandas data series with dates as rows and one column with turnover
+       """
+
         return self.__get__('turnover.csv')
     
     def get_portfolio(self, dated):
+        """Get a pandas data frame with User data and Optimized Weights for a single date
+
+        Parameters
+        ----------
+        dated: str YYYY-mm-dd
+            Date for which the portfolio is needed
+
+
+       Returns
+       -------
+       Pandas data frame joined with user data and identifier
+       """
+
         user_data = self.output.get_user_data()
         df = user_data.get_data(dated)
         weights = self.get_weights()[[dated]]
         weights.columns = ['WEIGHT']
         return pd.merge(df, weights, left_index=True, right_index=True)
         
-        
 
 
-
-'''
-Optimizer class
-
-Class allows to do the following:
-    1.Run new optimization
-    2.Pull data for previously run optimizations
-    3.List all optimization (failed/successful)
-    4.Download Weights and Summary file
-'''
 class Optimizer(Base):
+    """
+    Optimizer class for interfacing with the QES Hosted Optimizer
 
+    Class allows to do the following:\n
+        1.Run new optimization\n
+        2.Pull data for previously run optimizations\n
+        3.List all optimization (failed/successful)\n
+        4.Download Weights and Summary file\n
+        5.Uploads custom data
+    """
     def __init__(self, conn):
         super().__init__(version = 2)
         self.set_conn(conn)
@@ -679,30 +849,124 @@ class Optimizer(Base):
         self.no_request_error_msg = 'No Optimization Associated with the class, either set id or create new optimization request'
 
     def set_template(self, template: str):
+        """Sets the template to use. The template is the base optimizer template that provides default parameters
+        for the optimization. List of templates can be pulled from Connection object.
+
+        Parameters
+        ----------
+        objective: template
+            Name of the template to be used, e.g., default
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['template'] = template
         return self
 
     def set_objective(self, objective: str):
+        """Sets the objective function for the optimization. The optimizer supports:
+        - MVO: Mean Variance Optimization. Lambda and Alpha should be provided in order to use this.
+        - minRisk: Minimize Risk.
+        - maxAlpha: Maximize Alpha. Alpha should be provided.
+
+        Parameters
+        ----------
+        objective: str
+            Objective Function, e.g., MVO, minRisk, or maxAlpha
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['objective'] = objective
         return self
     
     def set_alpha(self, alpha: str):
+        """Sets the Alpha column in the CSV file.
+
+        Parameters
+        ----------
+        alpha: str
+            Column name of the alpha score. This is used when the objective function is either maxAlpha or MVO
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['alpha'] = alpha
         return self
 
     def set_adv_factor(self, adv_factor: str):
+        """Sets the ADV factor to use for ADV control in the .
+
+        Parameters
+        ----------
+        adv_factor: str
+            Name of the supported ADV Factor
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['adv_factor'] = adv_factor
         return self
     
     def set_htb_threshold(self, threshold: float):
+        """Sets the High to Borrow Threshold for excluding the short position. The threshold takes a value from 2-10.
+        Higher value of this threshold will include securities in the short portfolio that are harder to short.
+        Value of 10 will include all securities, same as default.
+
+        Parameters
+        ----------
+        threshold: float
+            Threshold of Hard to Borrow. This will exclude any securities from short securities that have score > threshold.
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['threshold'] = threshold
         return self
 
     def set_benchmark(self, benchmark: str):
+        """Sets the Benchmark column in the CSV file.
+
+        Parameters
+        ----------
+        benchmark: str
+            Column name of the benchmark weight
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+        self.req['use_benchmark'] = 'TRUE'
         self.req['benchmark'] = benchmark
         return self
     
     def set_init_portfolio(self, init_portfolio: str):
+        """Sets the initial portfolio. This should be set as one of the column name.
+
+        Parameters
+        ----------
+        init_portfolio: str
+            Column name of the start initial portfolio in the uploaded CSV file
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['init_portfolio'] = init_portfolio
         return self
     
@@ -722,8 +986,9 @@ class Optimizer(Base):
             Maximum Exposure for each of the group
         benchmark: bool
             Boolean indicator if the exposure should be relative to the benchmark
-        transformer: dictionary
-            Transformer function to convert the grouping_factor to categorical function. For example {'transformer':'binner',bins:[100,1000,10000,100000]}
+        transformation: dictionary
+            Transformer function to convert the grouping_factor to categorical function.
+            For example {'transformer':'binner',bins:[100,1000,10000,100000]}
 
         Returns
         -------
@@ -751,6 +1016,11 @@ class Optimizer(Base):
             Column corresponding to the upper bound
         benchmark: bool
             Boolean indicator if the bound should be relative to the benchmark weight
+
+        Returns
+        -------
+        Optimizer Class Instances
+
         """
         bounds = self.req.get('bounds')
         if bounds is None:
@@ -780,7 +1050,11 @@ class Optimizer(Base):
             Minimum exposure for the risk factor
         factor_max_exposure: float
             Maximum exposure for the risk factor
-        
+
+        Returns
+        -------
+        Optimizer Class Instances
+
         """
         self.req['neutralization_factors'] = {
             'Factor': neutralization_factors,
@@ -798,7 +1072,11 @@ class Optimizer(Base):
             List of neutralization factors. This should be referenced in the risk model. 
         factor_min_exposure: float
             Minimum exposure for the risk factor
-        
+
+        Returns
+        -------
+        Optimizer Class Instances
+
         """
         self.req['neutralization_factors_abs'] = {
             'Factor': neutralization_factors,
@@ -822,7 +1100,11 @@ class Optimizer(Base):
             Control exposure at each group level. Default can be none so entire universe is kept in one group
         benchmark: bool
             Boolean indicator when set the exposure are computed relative to the benchmark
-        
+
+        Returns
+        -------
+        Optimizer Class Instances
+
         """
         neut_matrix = self.req.get('neutralization_matrix')
         if neut_matrix is None:
@@ -846,31 +1128,127 @@ class Optimizer(Base):
         return self
 
     def set_bounds(self,lb:float, ub: float):
+        """Sets weight bound for securities
+
+        Parameters
+        ----------
+        lb: float
+            Lower Bound. Minimum weight allowed for any security to take
+        ub: float
+            Upper Bound. Maximum weight allowed for any security to take
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['lb'] = lb
         self.req['ub'] = ub
         return self
 
     def set_target_risk(self, target_risk: float):
+        """Sets the target risk. The value is in decimal, so 0.2 will indicate 20% annualized risk
+
+        Parameters
+        ----------
+        target_risk: flowt
+            Target Risk. Maximum risk allowed. Value is in decimal, so 0.2 will indicate 20% annualized risk
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['target_risk'] = target_risk
         return self
 
     def set_max_turnover(self, turnover: float):
+        """Sets the maximum allowed turnover. The value is in fraction, e.g., 1.5 will be 150% turnover for each rebalance.
+        For when the required turnover > max_turnover, the optimizer will fail
+
+        Parameters
+        ----------
+        turnover: float
+            Maximum Turnover Allowed.
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['turnover'] = turnover
         return self
 
     def set_max_number_securities(self, max_securities: int):
+        """Sets the maximum number of securities with non-zero weight in the portfolio
+
+        Parameters
+        ----------
+        max_securities: int
+            Maximum number of securities with non-zero weights. The optimizer will try to keep the number
+            of securities with non-zero weights below this number
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['limit_number'] = max_securities
         return self
     
     def set_min_number_securities(self, min_securities: int):
+        """Sets the minimum number of securities with non-zero weight in the portfolio
+
+        Parameters
+        ----------
+        min_securities: int
+            Minimum number of securities with non-zero weights. The optimizer will try to keep the number
+            of securities with non-zero weights above this number
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['min_number'] = min_securities
         return self
     
     def set_risk_model(self, risk_model: str):
+        """Sets the risk model to use for the optimizer. For list of available risk model, please contact QES Team
+        at luo.qes@wolferesearch.com
+
+        Parameters
+        ----------
+        risk_model: str
+            Risk Model Id. QES has several risk models that can be used for optimizer. Please contact the team for access.
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['risk_model'] = {'risk_model_id' : risk_model}
         return self
     
     def set_lambda(self, _lambda: float):
+        """Sets the lambda for MVO problem. Note that this should be chosen carefully based on the units of Alpha.
+
+        Parameters
+        ----------
+        _lambda: float
+            Risk Aversion Factor(Lambda). The value is used to build objective function with Alpha (Linear)
+            and Variance (Quadratic). Note that Variance
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['lambda'] = _lambda
         return self
     
@@ -879,22 +1257,93 @@ class Optimizer(Base):
         return self
 
     def set_min_holding(self, min_holding: float):
+        """Sets the minimum holding weight for securities. This should be set to prevent optimizer from
+        selecting securities with very small weights.
+
+        Parameters
+        ----------
+        min_holding: float
+            Minimum Weight for Holdings. THe value is in decimal, so a value of 0.002 will indicate that
+            no securities with less than 20bps weight will be allowed in the optimized portfolio
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['min_holding'] = min_holding
         return self
 
     def set_min_long_weight(self, min_long_weight: float):
+        """Sets the lower bound for total long exposure. A value of 0.9 will indicate that at least 90% of notional
+        will be allocated to the long side of the portfolio
+
+        Parameters
+        ----------
+        min_long_weight: float
+            Minimum Long Side Exposure. The optimizer will allocate at least this much to the long side of the
+            optimized portfolio
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['min_long_weight'] = min_long_weight
         return self
 
     def set_max_long_weight(self, max_long_weight: float):
+        """Sets the upper bound for total long exposure. A value of 1.1 will indicate that at most 110% of notional
+        will be allocated to the long side of the portfolio
+
+        Parameters
+        ----------
+        max_long_weight: float
+            Maximum Long Side Exposure. The optimizer will allocate at most this much to the long side of the
+            optimized portfolio
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['max_long_weight'] = max_long_weight
         return self
 
     def set_min_short_weight(self, min_short_weight: float):
+        """Sets the lower bound for total short exposure. A value of 0.9 will indicate that at least 90% of notional
+        will be allocated to the short side of the portfolio
+
+        Parameters
+        ----------
+        min_short_weight: float
+            Minimum Short Side Exposure. The optimizer will allocate at least this much to the short side of the
+            optimized portfolio
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['min_short_weight'] = min_short_weight
         return self
     
     def set_max_short_weight(self, max_short_weight: float):
+        """Sets the upper bound for total short exposure. A value of 1.1 will indicate that at most 110% of notional
+        will be allocated to the short side of the portfolio
+
+        Parameters
+        ----------
+        max_short_weight: float
+            Maximum Long Side Exposure. The optimizer will allocate at most this much to the short side of the
+            optimized portfolio
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['max_short_weight'] = max_short_weight
         return self
 
@@ -907,30 +1356,121 @@ class Optimizer(Base):
         return self
     
     def set_transaction_cost_model(self, transaction_cost_model: str):
+        """Sets the transaction cost model to be used. Please contact luo.qes@wolferesearch.com on getting access to these.
+
+        Parameters
+        ----------
+        transaction_cost_model: str
+            Id of the transaction cost model to be used. Please contact luo.qes@wolferesearch.com on getting access to these.
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['transaction_model'] = transaction_cost_model
         return self
 
     def set_transaction_cost(self, transaction_cost: float):
+        """Sets a fixed transaction cost that is applied to turnover for return computation
+
+        Parameters
+        ----------
+        transaction_cost: float
+            Transaction Cost. Transaction cost as fraction of turnover, a 0.0005 cost will indicate 5bp of turnover
+            value will be deducted
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['trans_cost'] = transaction_cost
         return self
 
     def set_soft_turnover_penalty(self, soft_turnover_penalty: float):
+        """Sets the penalty function for turnover. The turnover function is added to the objective function when
+        this is selected.
+
+        Parameters
+        ----------
+        soft_turnover_penalty: float
+            Multiplier for turnover term when added to the objective function.
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['soft_turnover_penalty'] = soft_turnover_penalty
         return self
 
     def set_soft_relative_weight_penalty(self, soft_relative_weight_penalty: float):
+        """Sets the penalty function for weight deviation from the benchmark
+
+        Parameters
+        ----------
+        soft_relative_weight_penalty: float
+            Multiplier for weight deviation from benchmark.
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['soft_relative_weight_penalty'] = soft_relative_weight_penalty
         return self
 
     def set_relative_weight_min(self, relative_weight_min: float):
+        """Sets lower bound constraint for the deviation from benchmark weight
+
+        Parameters
+        ----------
+        relative_weight_min: float
+            Minimum deviation from the benchmark. The value should be less than 0 to allow optimizer
+            to select weights less than the benchmark for securities
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
         self.req['relative_weight_min'] = relative_weight_min
         return self
 
     def set_relative_weight_max(self, relative_weight_max: float):
+        """Sets upper bound constraint for the deviation from benchmark weight
+
+        Parameters
+        ----------
+        relative_weight_max: float
+            Maximum deviation from the benchmark. The value should be greater than 0 to allow optimizer
+            to select weights greater than the benchmark for securities
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
         self.req['relative_weight_max'] = relative_weight_max
         return self
 
     def get_results(self):
+        """Gets the data associated with the optimizer. Prior to calling this submit and wait should be called to ensure
+        there is an associated optimization. This will only when the status of the optimization is "Completed".
+
+
+        Returns
+        -------
+        Optimizer Result Object :class:`~micsvc.OptimizerResult`
+
+        """
+
         return OptimizerResult(self.get_output())
 
 class RiskModel(Base):
