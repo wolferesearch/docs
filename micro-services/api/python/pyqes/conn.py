@@ -7,20 +7,19 @@ class Connection:
     gets initialized using username and password
     simplify the process to call functional APIs
     '''
-    def __init__(self, username = None, password = None, URL = 'http://tsdb1.qes.com:6481'):
+    def __init__(self, username = None, password = None, URL = 'http://feed.luoquant.com'):
         # assign the feature
         self.username = username
         self.password = password
         self.URL = URL
-        self.session = self.authorize()
+        session = requests.Session()
+        session.auth = (username, password)
+        self.session = session 
         self.headers = {'Content-type': 'application/json', 'Accept': 'text/plain'} # headers for json HTTP access
         self.jobs = None
 
     def authorize(self):
         '''authorize the HTTP with username and password'''
-        session = requests.Session()
-        if self.username:
-            session.auth = (self.username, self.password)
         return session
 
     def authorize(self):

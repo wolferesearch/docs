@@ -1,11 +1,13 @@
 from io import StringIO
 import pandas as pd
-from websocket import create_connection
+#from websocket import create_connection
 import json
 import requests
 import datetime
 import uuid
 import time
+import ssl
+import websocket
 
 class RemoteResponse:
     """
@@ -142,6 +144,11 @@ class RemoteJupyterClient:
             return 'https://' + self.url + "/user/" + self.user + '/api/' + svc + '/' + path
         else:
             return 'https://' + self.url + "/user/" + self.user + '/api/' + svc 
+        
+    def _post_(self,svc,path,payload):
+        url =  self._url_(svc,path)
+        response = requests.post(url,headers=self.headers, verify = self.verify, json = payload)
+        return json.loads(response.text)
     
     def _get_(self,svc,path):
         url =  self._url_(svc,path)
@@ -186,16 +193,22 @@ class RemoteJupyterClient:
         return pd.DataFrame(self._get_('kernels', None))
     
     def _ws_(self, kernel):
-        channel = "ws://" + self.url + "/user/" + self.user + "/api/kernels/" + kernel + "/channels"
-        return create_connection(channel, header = self.headers)
+        channel = "wss://" + self.url + "/user/" + self.user + "/api/kernels/" + kernel + "/channels"
+        ws = websocket.WebSocket(sslopt ={"cert_reqs": ssl.CERT_NONE})
+        return ws.connect(channel, header = self.headers)
     
-    def _wsheader_(self):
+    def _wst_(self, terminal):
+        channel = "wss://" + self.url + "/user/" + self.user + "/terminals/websocket/" + terminal
+        ws = websocket.WebSocket(sslopt ={"cert_reqs": ssl.CERT_NONE})
+        return ws.connect(channel, header = self.headers)
+    
+    def _wsheader_(self, msg_type = 'execute_request'):
         return { 
             'msg_id' : uuid.uuid1().hex, 
             'username': self.user, 
             'session': uuid.uuid1().hex, 
             'data': datetime.datetime.now().isoformat(),
-            'msg_type': 'execute_request',
+            'msg_type': msg_type,
             'version' : '5.1'
         }
                           
