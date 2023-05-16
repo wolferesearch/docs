@@ -20,7 +20,7 @@ class Connection:
 
     def authorize(self):
         '''authorize the HTTP with username and password'''
-        return session
+        return self.session
 
     def authorize(self):
         '''authorize the HTTP with username and password'''

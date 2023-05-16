@@ -1,4 +1,5 @@
-
+from io import StringIO
+import pandas as pd
 class DocsApi:
     def __init__(self, connection):
         self.connection = connection
@@ -34,7 +35,7 @@ class DocsApi:
         return self.get_content('transcripts','all',key)
         
     def get_transcript_keys(self, companyid, date):
-        return self.get_keys('transcripts','all',key,date,companyid)
+        return self.get_keys('transcripts','all',date,companyid)
     
     def search_transcripts(self, idtype, _id, startdate, enddate):
         return self.search_docs('transcripts','all',idtype,_id,startdate,enddate)
