@@ -411,10 +411,16 @@ class EntityService:
         return JobOutput(conn = self.conn, uuid = self.uuid, files = content)
 
 class Template:
-    '''
-    Base Template Class
-    set up the argument for API function
-    '''
+    """
+    Base Template Class set up the argument for API function. Templates are saved parameters that can be used across other micro services. Types of services available:
+
+    1. Optimization
+    2. Risk Model
+    3. Attribution
+    4. Black-Litterman
+    5. Portfolio Simulator
+
+    """
     def __init__(self, conn, val):
         '''
         :param conn: Connection object to call the APIs
@@ -426,18 +432,42 @@ class Template:
         self.val = val
     # Getter Functions
     def name(self):
+        """Returns name of the template.
+
+        Returns: str
+        -------
+        Name of the Template
+        """
         return self.val['NAME']
 
     def type(self):
+        """Type of the template.
+
+        Returns: int
+        -------
+        The type can be either TYPE_OPTIMIZATION, TYPE_RISKMODEL, TYPE_ATTRIBUTION, TYPE_PORTSIMULATOR, TYPE_BLACKLITTERMAN
+        """
         return self.val['TYPE']
 
     def description(self):
         return self.val['DESCRIPTION']
 
     def content(self):
+        """ Returns content of the template
+
+        Returns: dict
+        -------
+        Content of the template. The dictionay can be nested. 
+        """
         return self.json
 
     def save(self, name):
+        """ Saves the template with a name. Note that templates are immutable, hence in order to save changes it should be assigned a unique name. 
+
+        Returns: self
+        -------
+        
+        """
         self.json['name'] = name
         self.json['__name__'] = name
         typeMap = {
@@ -445,6 +475,7 @@ class Template:
             "Optimization" : "optimization"
         }
         self.conn.post('template/' + typeMap.get(self.type()), self.json)
+        return self
 
 class OptimizerTemplate(Template):
     ''' Optimization Template inherited from the pyqes Template class'''
@@ -486,43 +517,153 @@ class OptimizerTemplate(Template):
         return self.json['benchmark']
 
 class RiskModelTemplate(Template):
-    '''Risk Model Template inherited from the pyqes Template class'''
+    """Risk Model Template inherited from the main template class. Allows users to save parameters. The template allows user to do the following:
+    
+    1. Add factors
+    2. Add meta factors
+    3. Update options. For more information on options, please contact QES Team
+    4. Modify covariance arguments. For more information on covariance arguments, please contact QES Team
+    5. Update specific risk shrinkage
+
+    The template should be saved after modifying in order to use in risk mode calculations. 
+    """
     def __init__(self,conn,raw):
         Template.__init__(self,conn,raw)
+
     def factors(self):
+        """Get list of factors in the template.
+
+        Returns: list
+        -------
+        List of factors in the template
+        """       
         return self.json['factors']
+    
     def meta(self):
+        """Get list of meta factors in the template.
+
+        Returns: list
+        -------
+        List of meta factors in the template
+        """ 
         return self.json['meta']
+    
     def cov_matrix_ags(self):
+        """Get covariance matrix args. For full list of arguments, please contact QES Team.
+
+        Returns: dictionary
+        -------
+        Parameters of Covariance Matrix. 
+        """ 
         return self.json['covArgs']
+    
     def options(self):
+        """Get options for the risk model. For full list of options, please contact QES Team.
+
+        Returns: dictionary
+        -------
+        Dictionary with parameters for risk model 
+        """ 
         return self.json['options']
 
     def add_factor(self, mnemonic, name):
+        """Add factor the template.
+
+        Parameters
+        ----------
+        mnemonic: str
+            ID of the factor. Should be one of the factors in QES library or uploaded user data.
+        name: str
+            Name of the factor
+            
+        Returns: self
+        -------
+        
+        """ 
         factor_ls = self.factors()
         factor_ls.append({'mnemonic':mnemonic, 'name':name})
         self.json['factors'] = factor_ls
+        return self
 
     def add_meta(self, mnemonic, name):
+        """Add meta factor to the template.
+
+        Parameters
+        ----------
+        mnemonic: str
+            ID of the factor. Should be one of the factors in QES library or uploaded user data.
+        name: str
+            Name of the factor
+            
+        Returns: self
+        -------
+        
+        """         
         meta_ls = self.meta()
         meta_ls.append({'mnemonic': mnemonic, 'name': name})
         self.json['meta'] = meta_ls
+        return self
 
     def set_cov_matrix_interval(self, interval):
+        """Sets covariance matrix interval (sampling frequency).
+
+        Parameters
+        ----------
+        interval: int
+            Frequency for the sample covariance matrix. Should be in business days. 
+            
+        Returns: self
+        -------
+        
+        """            
         self.json['covArgs']['interval'] = interval
+        return self
 
     def set_cov_matrix_var_half_life(self, var_half_life):
+        """ Sets the half life for Variance computation (Diagonal).
+
+        Parameters
+        ----------
+        var_half_life: int
+            Half life in # of intervals. If the interval is 1 day, and half life is 60, it is 60 days. If interval is 3 days, and half life is 40, it would be 120 days.  
+            
+        Returns: self
+        -------        
+        """
         self.json['covArgs']['var.period'] = var_half_life
+        return self
 
     def set_cov_matrix_covar_half_life(self, covar_half_life):
+        """ Sets the half life for Covariance computation (Off-Diagnoal).
+
+        Parameters
+        ----------
+        covar_half_life: int
+            Half life in # of intervals. If the interval is 1 day, and half life is 60, it is 60 days. If interval is 3 days, and half life is 40, it would be 120 days.  
+            
+        Returns: self
+        ------
+        """
         self.json['covArgs']['cov.period'] = covar_half_life
+        return self
 
     def set_specific_risk_shrinkage(self, shrinkage):
+        """ Sets shrinkage for specific risk. If 0 then specific risk is not shrunk to industry/global median. 
+
+        Parameters
+        ----------
+        shrinkage: float [0-1]
+            Intensity of shrinkage. 0 is no shrinkage and 1 is shrunk to all way to Industry and Global medians.   
+            
+        Returns: self
+        ------
+        """        
         if shrinkage > 1:
             raise ValueError('Shrinkage cannot be greater than one')
         elif shrinkage < 0:
             raise ValueError('Shrinkage cannot be less than 0')
         self.json['options']['spRisk']['shrinkage'] = shrinkage
+        return self
        
 class Base:
     """
@@ -1474,7 +1615,15 @@ class Optimizer(Base):
         return OptimizerResult(self.get_output())
 
 class RiskModel(Base):
-    '''Risk Model Class'''
+    """Risk Model Generator. The class provides a simple interface for building custom risk model. It allows the caller to do the following:
+
+    1. Choose a standard template for risk model 
+    2. Choose a risk universe
+    3. Change the parameters of risk model calculation
+    4. Add/Remove factors from the template
+    5. Add custom data
+
+    """
     def __init__(self, conn):
         super().__init__(version = 1)
         self.set_conn(conn)
@@ -1486,28 +1635,74 @@ class RiskModel(Base):
         self.set_latest()
 
     def dates(self):
+        """Returns date list for which the risk model is built. The risk model should be in completed or success state. 
+
+       Returns: list 
+       -------
+       List of dates YYYY-mm-dd
+       """       
         if self.esvc is None:
             raise ValueError(self.no_request_error_msg)
         info = json.loads(self.esvc.get(""))
         return info['dates']
 
     def add_risk_factors(self, factors):
+        """Add a list of factors to the risk model. The factor should either be in User data or one of the supported mnemonics in QES Library. Should be called prior to submitting the request. 
+
+       Returns: list of str
+       -------
+       List of factors to add to the risk model
+       """             
         self.req['add_factors'] = factors
         return self
 
     def remove_risk_factors(self, factors):
+        """Removes factors from the risk model. Should be called prior to submitting the request. 
+
+       Returns: list of str
+       -------
+       List of factors to remove. Note that if the factor is not in the template, it will ignore it. 
+       """        
         self.req['remove_factors'] = factors
         return self
     
     def set_grouping(self, grouping_variable_name):
+        """Sets the grouping (sector or industry) for the risk model. The factor should either be in User data or one of the supported mnemonics in QES Library. Should be called prior to submitting the request
+
+       Returns: str
+       -------
+       Grouping Factor that will be used instead of default Industry Group.  
+       """          
         self.req['grouping'] = grouping_variable_name
         return self
 
     def set_template(self, template):
+        """Sets the template for the risk model. Templates are reusable parameters that can maintained independently. SHould be called prior to submitting the request. 
+
+       Returns: list of str
+       -------
+       List of factors to remove. Note that if the factor is not in the template, it will ignore it. 
+       """   
         self.req['template'] = template
         return self
 
     def get_data(self, dated):
+        """Gets the data for the risk model. This will include the following:
+        1. Exposure matrix 
+        2. Meta data
+        3. Factor Covariance Matrix
+        4. Stock Specific Risk
+
+        Parameters
+        ----------
+        dated: str YYYY-mm-dd
+            Date for which the risk model data is needed. 
+
+
+       Returns: str
+       -------
+       Dictionary of risk model data suite.  
+       """          
         info = json.loads(self.esvc.get(dated))
         data_dic = {}
         file_ls = info['files']
@@ -1521,6 +1716,22 @@ class RiskModel(Base):
         return data_dic
 
     def download_all(self, out_dir):
+        """Downloads all data to a local directory.
+        1. Exposure matrix 
+        2. Meta data
+        3. Factor Covariance Matrix
+        4. Stock Specific Risk
+
+        Parameters
+        ----------
+        out_dir: str 
+            Directory where the data should be saved. This should be a local directory. This should be called when the risk model is in Completed or Success state. 
+
+
+       Returns: str
+       -------
+       Dictionary of risk model data suite.  
+       """           
         date_ls = self.dates()
         # save the data along time into csv files
         for dt in date_ls:
@@ -1537,6 +1748,25 @@ class RiskModel(Base):
         return True
 
     def new_request(self, universe, template, startDate, endDate, freq):
+        """Submits a new Request for building risk model. This is an async all hence it will return immediate. The caller can poll for status to change to Completed or Success. 
+
+        Parameters
+        ----------
+        universe: str
+            Universe Id. Should be one of the supported universes in QES library. 
+        template: str
+            Name of the Template. Should be one of the templates saved prior to calling this. 
+        startDate: str date YYYY-mm-dd
+            Start date for the risk model
+        endDate: str date YYYY-mm-dd
+            End date for the risk model
+        freq: str 1d,2d,..,1w, 2w,..1m,2m,..1q,2q,..1y,2y
+            Frequency of when to re-evaluate the risk model. 
+
+       Returns: self
+       -------
+       Instance of the same class
+       """        
         request = self.req
 
         if request.get('user_data') is not None:
