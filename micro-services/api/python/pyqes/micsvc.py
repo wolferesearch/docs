@@ -597,7 +597,7 @@ class RiskModelTemplate(Template):
             
         Returns: self
         -------
-        
+        Returns instance of itself
         """         
         meta_ls = self.meta()
         meta_ls.append({'mnemonic': mnemonic, 'name': name})
@@ -614,7 +614,7 @@ class RiskModelTemplate(Template):
             
         Returns: self
         -------
-        
+        Returns instance of itself
         """            
         self.json['covArgs']['interval'] = interval
         return self
@@ -628,7 +628,8 @@ class RiskModelTemplate(Template):
             Half life in # of intervals. If the interval is 1 day, and half life is 60, it is 60 days. If interval is 3 days, and half life is 40, it would be 120 days.  
             
         Returns: self
-        -------        
+        -------       
+        Returns instance of itself 
         """
         self.json['covArgs']['var.period'] = var_half_life
         return self
@@ -643,6 +644,7 @@ class RiskModelTemplate(Template):
             
         Returns: self
         ------
+        Returns instance of itself
         """
         self.json['covArgs']['cov.period'] = covar_half_life
         return self
@@ -657,6 +659,7 @@ class RiskModelTemplate(Template):
             
         Returns: self
         ------
+            Returns instance of itself
         """        
         if shrinkage > 1:
             raise ValueError('Shrinkage cannot be greater than one')
@@ -989,6 +992,25 @@ class Optimizer(Base):
         self.typeid = TYPE_OPTIMIZATION
         self.no_request_error_msg = 'No Optimization Associated with the class, either set id or create new optimization request'
 
+    def set_notional(self,init_notional_value: float, notional_value: float):
+        """Sets notional value for the portfolio. Is used when ADV consraint is used. 
+
+        Parameters
+        ----------
+        init_notional_value: float
+            Initial Notional Value 
+        notional_value: float
+            Notional value of each rebalance
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+        self.req['init_notional_value'] = init_notional_value
+        self.req['notional_value'] = notional_value
+        return self
+    
     def set_template(self, template: str):
         """Sets the template to use. The template is the base optimizer template that provides default parameters
         for the optimization. List of templates can be pulled from Connection object.
