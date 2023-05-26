@@ -992,6 +992,78 @@ class Optimizer(Base):
         self.typeid = TYPE_OPTIMIZATION
         self.no_request_error_msg = 'No Optimization Associated with the class, either set id or create new optimization request'
 
+    def set_max_ADV_trading_participation(self, max_ADV_part: float):
+        """Sets upper limit on the trading to be fraction of the % of average trading volumne. 
+
+        Parameters
+        ----------
+        max_ADV_part: float
+            Maximum ADV Allowed to trade during rebalance.  
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """        
+        self.req['max_ADV_trading_participation'] = max_ADV_part
+        self.req['use_ADV'] = True
+        return self
+    
+    def set_max_ADV_holding_participation(self, max_ADV_part: float):
+        """Sets upper limit on the holding to be fraction of the % of average trading volume. Note that this is evaluated only at the rebalance time. Between the 
+        rebalance the portfolio can have holding > limit 
+
+        Parameters
+        ----------
+        max_ADV_part: float
+            Maximum ADV Allowed to hold on the rebalance date.   
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """        
+        self.req['max_ADV_holding_participation'] = max_ADV_part
+        self.req['use_ADV'] = True
+        return self
+    
+    def set_soft_ADV_trading_penalty(self, soft_ADV_penalty: float):
+        """Sets penalty for ADV. This allows the ADV constraint to be soft.  
+
+        Parameters
+        ----------
+        soft_ADV_penalty: float
+            Penalty for violating the Trading ADV Constraint. A high value will ensure that optimizer stays within the limit. 
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """        
+        self.req['soft_ADV_trading_penalty'] = soft_ADV_penalty
+        return self
+
+    def set_soft_ADV_trading_penalty(self, soft_ADV_penalty: float):
+        """Sets notional value for the portfolio. Is used when ADV consraint is used. 
+
+        Parameters
+        ----------
+        soft_ADV_penalty: float
+            Penalty for violating the Holding ADV Constraint. A high value will ensure that optimizer stays within the limit. 
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """        
+        self.req['soft_ADV_holding_penalty'] = soft_ADV_penalty
+        return self
+
+    def set_use_adv(self, use_adv: bool):
+        self.req['use_ADV'] = use_adv
+        return self
+
+
     def set_notional(self,init_notional_value: float, notional_value: float):
         """Sets notional value for the portfolio. Is used when ADV consraint is used. 
 
@@ -1510,9 +1582,6 @@ class Optimizer(Base):
         self.req['max_short_weight'] = max_short_weight
         return self
 
-    def set_use_adv(self, use_adv: bool):
-        self.req['use_adv'] = str(use_adv)
-        return self
 
     def set_use_tcm(self, use_tcm: bool):
         self.req['use_tcm'] = str(use_tcm)
