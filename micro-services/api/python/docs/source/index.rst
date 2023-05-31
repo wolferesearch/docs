@@ -7,7 +7,7 @@ Welcome to QES Microservices's documentation!
 =============================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
 
@@ -28,9 +28,8 @@ API
 
 .. automodule:: pyqes.micsvc
    :members:
-
-
-
+.. automodule:: pyqes.nlp
+   :members:
 
 
 Indices and tables

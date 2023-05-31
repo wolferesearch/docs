@@ -18,13 +18,9 @@ class NLPApi:
         QES Financial Natural Language Processing - API provides a suite of NLP toolkits with state-of-the-art deep learning pretrained language models (PLMs) designed for applications in finance and investment domain.
 
         The QesNLP API service consists of the following three functionality modules.
-
         - Preprocessing Module - preprocess the raw text input into parsed machine-readable NLP data structure, including tokenization, summarization, entity recognition, and keyphrases identification.
-
         - Embedding Module - embed the input text document/sentence into contextual vectors based on the NLP pre-trained language models. The contextualized vectors fit in with the standard machine learning algorithms and could empower the downstream NLP tasks.
-       
         - Exposure Module - This module renders the thematic distance between text document to well-defined theme by leveraging the contextual embeddings of both text documents and theme clusters. 
-
         - Sentiment Classification Module - This module supports downstream NLP classification tasks, such as sentiment analysis.
     """
     
@@ -66,16 +62,17 @@ class NLPApi:
             - news_sentiment: nBERT-news-sentiment model is fine-tuned on 10,000 manually annotated (positive, negative, neutral) sentences from financial news. This model achieves superior performance on financial sentiment anlaysis task.
             - twitter-sentiment:The BERT-twitter model is fine-tuned on trained on ~58M English tweets and fine-tuned for sentiment analysis with the TweetEval benchmark, a unified benchmark for tweet classification consisting of seven heterogeneous tasks that are core to social media NLP research such as Sentiment Analysis and Emotion Recognition.
 
-       Returns: pandas.DataFrame
-       -------
-       Returns a data frame containting score for sentiment. 
-       """
+        Returns: pandas.DataFrame
+        -------
+        Returns a data frame containting score for sentiment. 
+        """
 
         response = self._post_(svc = 'sentiment/{}'.format(model), texts = list_of_texts)
         return pd.DataFrame(self._to_json(response)['metrics'])
     
     def compute_social_emotion(self, list_of_texts: list):
         """Computes Forward-looking statements (FLS) inform investors of managers’ beliefs and opinions about firm's future events or results.
+        
         Parameters
         ----------
         list_of_texts: list
@@ -92,7 +89,9 @@ class NLPApi:
         return self.compute_sentiment(list_of_texts, model = 'twitter-emotion')
      
     def compute_forward_looking_tone(self, list_of_texts: list):
-        """Computes if a given text document statement is forward-looking or not. Forward-Looking Statements (FLS) are typically declarations made by company management that convey their beliefs, expectations, or predictions about the company's future events or results.
+        """Computes if a given text document statement is forward-looking or not. 
+        Forward-Looking Statements (FLS) are typically declarations made by company management that convey their beliefs, expectations, or predictions about the company's future events or results.
+        
         Parameters
         ----------
         list_of_texts: list
@@ -114,10 +113,10 @@ class NLPApi:
         ----------
         list_of_texts: list
             List of Text that needs to be analyzed. 
-       Returns: list
-       -------
-       Returns the list of key entities. For each element in the input text, a correponding list of tuples is returned.
-       """
+        Returns: list
+        -------
+        Returns the list of key entities. For each element in the input text, a correponding list of tuples is returned.
+        """
         response = self._post_(svc = 'preprocess/keyentity', texts = list_of_texts)
         return self._to_json(response)['keyphrases']
 
@@ -128,10 +127,10 @@ class NLPApi:
         ----------
         list_of_texts: list
             List of Text that needs to be analyzed. 
-       Returns: list
-       -------
-       Returns the list of key phrases (n-grams). For each element in the input text, a correponding list of tuples is returned.
-       """
+        Returns: list
+        -------
+        Returns the list of key phrases (n-grams). For each element in the input text, a correponding list of tuples is returned.
+        """
         response = self._post_(svc = 'preprocess/keyphrase', texts = list_of_texts)
         return self._to_json(response)['keyphrases']
     
@@ -142,10 +141,10 @@ class NLPApi:
         ----------
         list_of_texts: list
             List of Text that needs to be analyzed. 
-       Returns: list
-       -------
-       Returns summarized form of the inputted text. 
-       """
+        Returns: list
+        -------
+        Returns summarized form of the inputted text. 
+        """
         response = self._post_(svc = '/preprocess/summarize', texts = list_of_texts)
         return self._to_json(response)['summary']['summary_text']    
     
@@ -165,10 +164,10 @@ class NLPApi:
         ----------
         list_of_texts: list
             List of Text that needs to be analyzed. 
-       Returns: list
-       -------
-       Generates embedding for the text. Returns list of double vector. Is useful for comparing two texts using L2 distance
-       """        
+        Returns: list
+        -------
+        Generates embedding for the text. Returns list of double vector. Is useful for comparing two texts using L2 distance
+        """        
         response = self._post_(svc = '/embed', texts = list_of_texts)
         return self._to_json(response)['embedding']
            
@@ -179,10 +178,10 @@ class NLPApi:
         ----------
         list_of_texts: list
             List of Text that needs to be analyzed. 
-       Returns: pandas.DataFrame
-       -------
-       Exposure (0-1) of the the input text to each of the pre-defined themes. 
-       """
+        Returns: pandas.DataFrame
+        -------
+        Exposure (0-1) of the the input text to each of the pre-defined themes. 
+        """
         response = self._post_(svc = '/exposure/General', texts = list_of_texts)
         return pd.DataFrame(self._to_json(response)['exposures'])
 
@@ -193,13 +192,9 @@ class NLPApi:
         ----------
         list_of_texts: list
             List of Text that needs to be analyzed. 
-       Returns: pandas.DataFrame
-       -------
-       Exposure(0-1) of the input text to each of the pre-defined China Reopen themes. 
-       """
+        Returns: pandas.DataFrame
+        -------
+        Exposure(0-1) of the input text to each of the pre-defined China Reopen themes. 
+        """
         response = self._post_(svc = '/exposure/China', texts = list_of_texts)
         return pd.DataFrame(self._to_json(response)['exposures'])
-        
-    
-
-
