@@ -271,6 +271,9 @@ class JobOutput:
 
     def __file__(self, key):
         return key[(key.find('_')+1):len(key)]
+
+    def sym_mapping(self):
+        return self.get_data('D_mapping.csv')['mapping']
         
     def _append(self,keys,v,data):
         key = keys[0]
@@ -868,6 +871,9 @@ class OptimizerResult:
     """
     def __init__(self, output):
         self.output = output
+
+    def sym_mapping(self):
+        return self.output.sym_mapping()
 
     def __get__(self, name):
         return self.output.get_single_data(name)
@@ -1986,6 +1992,11 @@ class PortSimulatorOutput:
         self.include_interest = True
         self.include_shorting_fees = True
         
+    
+    def sym_mapping(self):
+        return self.output.sym_mapping()
+
+
     def _v_(self,name):
         if self.version == 2:
             v = self.data[name]
@@ -2122,7 +2133,10 @@ class AttributionResult:
     
     def __init__(self, output):
         self.output = output
-        
+    
+    def sym_mapping(self):
+        return self.output.sym_mapping()
+
     def get_summary(self):
         return self.output.get_data('MN_summary.csv')['summary']
     
