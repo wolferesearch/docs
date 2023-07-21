@@ -18,6 +18,7 @@ TYPE_OPTIMIZATION = 2
 TYPE_BLACKLITTERMAN = 7
 TYPE_ATTRIBUTION = 3
 TYPE_SIMULATOR = 8
+TYPE_HEDGE = 9
 
 class Connection:
     """
@@ -29,6 +30,7 @@ class Connection:
     3. Attribution
     4. Black Litterman
     5. Portfolio Simulator
+    6. Hedge
 
     """
     def __init__(self, username = os.environ.get('LQUANT_MICSVC_USER'), password = os.environ.get('LQUANT_MICSVC_PWD'), URL = 'https://feed.luoquant.com'):
@@ -173,6 +175,9 @@ class Connection:
 
     def get_attribution(self):
         return Attribution(self)
+    
+    def get_hedge_builder(self):
+        return HedgeBuilder(self)
 
     def get_catalog(self):
         return Catalog(self)
@@ -2217,6 +2222,52 @@ class Attribution(Base):
     def get_results(self):
         return AttributionResult(self.get_output())
 
+class HedgeBuilder(Base):
+    def __init__(self, conn):
+        super().__init__(version = 2)
+        self.set_conn(conn)
+        self.req = {}
+        self.endPoint = 'hedge' # TODO: Check if the syntax is hedge-builder
+        self.typeid = TYPE_HEDGE
+        self.cash = None
+        self.no_request_error_msg = 'No Hedge request associated with the instance. Either run a new one or attach successful UUID' 
+
+    def set_risk_model(self, risk_model: str):
+        self.req['risk_model'] = risk_model
+        return self
+    
+    def set_template_name(self, template_name: str):
+        self.req['template'] = template_name
+        return self
+    
+    def get_results(self):
+        return HedgeOutput(self.get_output())
+
+
+class HedgeOutput:
+    def __init__(self, output):
+        self.output = output
+    
+    def __get__(self, f1, f2):
+        return self.output.get_data('{}/{}'.format(f1, f2))
+    
+    def get_baskets(self):
+        return self.output.get_data('baskets')
+    
+    def get_basket(self, basket_name):
+        return self.__get__('baskets', 'D_{}.csv'.format(basket_name))
+    
+    def get_standalone_summary(self):
+        return self.__get__('summary', 'standalone_summary')
+
+    def get_afterhedge_summary(self):
+        return self.__get__('summary', 'afterhedge_summary')
+
+    def get_standalone_attribution(self):
+        return self.__get__('analysis', 'standalone_attr')
+
+    def get_afterhedge_summary(self):
+        return self.__get__('analysis', 'afterhedge_attr')
         
 class UserData:
 
