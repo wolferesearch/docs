@@ -284,10 +284,13 @@ class RemoteExecutor:
                 exclude_gics = None, min_mktcap = None, max_mktcap = None, min_adv = None, exclude_ma=False, 
                 marketcap_factor='MKTCAP*FXRATE_USD'):
         req = {}
+        req['id'] = id
         req['starting_univ'] = starting_univ
         req['starting_gics'] = starting_gics
         req['start_date'] = start_date
+        req['end_date'] = end_date
         req['freq'] = freq
+        req['marketcap_factor'] = marketcap_factor
 
         if exclude_gics is not None:
             req['exclude_gics'] = exclude_gics
@@ -304,7 +307,8 @@ class RemoteExecutor:
         if exclude_ma:
             req['exclude_ma'] = 'true'
 
-        return self._remote_(method = 'POST', endpoint = 'univ/build', payload = json.dumps(req))
+        response = self._remote_(method = 'POST', endpoint = 'univ/build', payload = json.dumps(req))
+        return id
 
     def list_jobs(self):
         return self._remote_(method = 'GET', endpoint = 'list/uuid')
