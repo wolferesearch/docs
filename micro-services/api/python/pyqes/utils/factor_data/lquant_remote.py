@@ -280,7 +280,7 @@ class RemoteExecutor:
             data = data[list(data.keys())[0]]
             return RemoteFactorData(data)
     
-    def build_sector_universe(id, starting_univ, starting_gics, start_date, end_date, freq, 
+    def build_sector_universe(self, id, starting_univ, starting_gics, start_date, end_date, freq, 
                 exclude_gics = None, min_mktcap = None, max_mktcap = None, min_adv = None, exclude_ma=False, 
                 marketcap_factor='MKTCAP*FXRATE_USD'):
         req = {}
