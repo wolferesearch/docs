@@ -2061,6 +2061,9 @@ class PortSimulatorOutput:
     def shares_traded(self):
         return self._m_('shares_traded')
     
+    def daily_pnl(self):
+        return self._m_('daily_pnl')
+    
     def shares(self):
         return self._m_('shares')
     
