@@ -2239,6 +2239,76 @@ class HedgeBuilder(Base):
     def set_template_name(self, template_name: str):
         self.req['template'] = template_name
         return self
+
+    def set_notional_value(self, notional_value):
+        self.req['notional_value'] = notional_value
+        return self
+
+    def set_hedge_type(self, hedge_type):
+        '''LONG_SHORT, LONG_ONLY, SHORT_ONLY, not case sensitive'''
+        self.req['hedge_type'] = hedge_type
+        return self
+
+    def set_factor_to_hedge(self, factor_to_hedge):
+        '''list of one or more SECTOR, STYLE, COUNTRY, SYSTEMATIC, or other fator name, case sensitive'''
+        self.req['factor_to_hedge'] = factor_to_hedge
+        return self
+
+    def set_factor_to_neutralize(self, factor_to_neutralize):
+        '''list of one or more SECTOR, STYLE, COUNTRY, SYSTEMATIC, or other fator name, case sensitive'''
+        self.req['factor_to_neutralize'] = factor_to_neutralize
+        return self
+
+    def set_auto_neutralization(self, auto_neutralization: bool):
+        '''default is True'''
+        self.req['auto_neutralization'] = auto_neutralization
+        return self
+
+    def set_max_number_of_stocks(self, max_number_of_stocks):
+        self.req['max_number_of_stocks'] = max_number_of_stocks
+        return self
+
+    def set_max_neutral_exposure(self, max_neutral_exposure):
+        self.req['max_neutral_exposure'] = max_neutral_exposure
+        return self
+
+    def set_max_gross_exposure(self, max_gross_exposure):
+        self.req['max_gross_exposure'] = max_gross_exposure
+        return self
+
+    def set_max_weight(self, max_weight):
+        self.req['max_weight'] = max_weight
+        return self
+
+    def set_min_weight(self, min_weight):
+        self.req['min_weight'] = min_weight
+        return self
+
+    def set_max_adv_usage(self, max_adv_usage):
+        self.req['max_adv_usage'] = max_adv_usage
+        return self
+
+    def set_default_univ(self, default_univ):
+        '''FMP_UNIV or CORE_FMP_UNIV, not case sensitive'''
+        self.req['default_univ'] = default_univ
+        return self
+
+    def set_scalars(self, scalars):
+        '''list of float point'''
+        self.req['scalars'] = scalars
+        return self
+
+    def set_hedge_ratio(self, hedge_ratio):
+        '''RISK or EXP or VOLADJEXP'''
+        self.req['hedge_ratio'] = hedge_ratio
+        return self
+
+    def set_exclude_condition(self, ma_target: bool, hard_to_borrow : bool, 
+        earning_release_names: bool,dual_listings: bool,portfolio_holdings: bool):
+        self.req['exclusions'] = {'ma_target': ma_target, 'hard_to_borrow': hard_to_borrow,
+                'earning_release_names': earning_release_names, 'dual_listings': dual_listings,
+                'portfolio_holdings': portfolio_holdings}
+        return self
     
     def get_results(self):
         return HedgeOutput(self.get_output())
@@ -2249,10 +2319,10 @@ class HedgeOutput:
         self.output = output
     
     def __get__(self, f1, f2):
-        return self.output.get_data('{}/{}'.format(f1, f2))
+        return self.output.get_data('{}/{}'.format(f1, f2)).get(f1).get(f2)
     
     def get_baskets(self):
-        return self.output.get_data('baskets')
+        return self.output.get_data('baskets').get('baskets')
     
     def get_basket(self, basket_name):
         return self.__get__('baskets', 'D_{}.csv'.format(basket_name))
@@ -2266,7 +2336,7 @@ class HedgeOutput:
     def get_standalone_attribution(self):
         return self.__get__('analysis', 'standalone_attr')
 
-    def get_afterhedge_summary(self):
+    def get_afterhedge_attribution(self):
         return self.__get__('analysis', 'afterhedge_attr')
         
 class UserData:
