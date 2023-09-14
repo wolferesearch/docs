@@ -142,6 +142,12 @@ class Connection:
     def templates(self):
         # access the list of templates
         return pd.read_json(self.get('template'))
+    
+    def delete_template(self, typeid, name):
+        return self.delete("template/{}/{}".format(typeid,name))
+
+    def delete_risk_template(self, name):
+        return self.delete_template(TYPE_RISKMODEL,name)
 
     def risk_templates(self):
         templates = self.templates()
@@ -656,6 +662,26 @@ class RiskModelTemplate(Template):
         """
         self.json['covArgs']['cov.period'] = covar_half_life
         return self
+    
+    def set_beta_shrinkage(self, shrinkage: float):
+        """
+            Sets shrinkage for beta estimator. The value should be between 0 and 1. 
+            
+        Parameters
+        ----------
+        shrinkage: float [0-1]
+            Intensity of shrinkage. 0 is no shrinkage and 1 is shrunk to all way to Z-score.  
+            
+        Returns: self
+        ------
+            Returns instance of itself
+        """ 
+        if shrinkage > 1:
+            raise ValueError('Shrinkage cannot be greater than one')
+        elif shrinkage < 0:
+            raise ValueError('Shrinkage cannot be less than 0')
+        self.json['options']['betaShrinkageFactor'] = shrinkage
+        return self           
 
     def set_specific_risk_shrinkage(self, shrinkage):
         """ Sets shrinkage for specific risk. If 0 then specific risk is not shrunk to industry/global median. 
@@ -2034,6 +2060,9 @@ class PortSimulatorOutput:
     
     def shares_traded(self):
         return self._m_('shares_traded')
+    
+    def daily_pnl(self):
+        return self._m_('daily_pnl')
     
     def shares(self):
         return self._m_('shares')

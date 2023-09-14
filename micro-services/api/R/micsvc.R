@@ -7,6 +7,7 @@ library(jsonlite)
 qes.microsvc.type.RISKMODEL <- 1
 qes.microsvc.type.OPTIMIZATION <- 2
 qes.microsvc.type.ATTRIBUTION <- 3
+qes.microsvc.type.HEDGEBUILDER <- 9
 
 
 
@@ -262,8 +263,7 @@ qes.microsvc.Conn <- R6Class(
       return(rawToChar(response$content))
     },
     .get = function(svc) {
-      response <- httr::GET(paste0(self$URL,'/',svc),
-                            self$.authenticate())
+      response <- httr::GET(paste0(self$URL,'/',svc),self$.authenticate())
     },
     get = function(svc) {
       response <- self$.get(svc)
@@ -359,13 +359,22 @@ qes.microsvc.EntitySvc <- R6Class(
     conn = NULL,
     uuid = NULL,
     svc = NULL,
-    initialize = function(conn, svc,uuid) {
+    version = 1,
+    initialize = function(conn, svc,uuid, version = 1) {
       self$conn <- conn
       self$uuid <- uuid
       self$svc <- svc
+      self$version = version
     },
     info = function() {
-      self$conn$get(paste0(self$svc,'/',self$uuid))
+      if (self$version == 1) {
+        return(self$conn$get(paste0(self$svc,'/',self$uuid)))
+      } else if (self$version == 2) {
+        return(self$conn$get(paste0('job/info/',self$uuid)))
+      } else {
+        stop(sprintf("Version [%s] not supported",self$version))
+      }
+      
     },
     get = function(path) {
       self$conn$get(paste0(self$svc,'/',self$uuid,'/',path))
@@ -399,7 +408,140 @@ qes.microsvc.EntitySvc <- R6Class(
         ws <- ws + 5
       }
       return(info)
+    },
+    get_job_output = function() {
+      return(self$get_output())
+    },
+    get_output = function() {
+      if (is.null(self$uuid)) stop("UUID is null. Cannot proceed. Did you forget to run or attach old id")
+      info = fromJSON(self$info())
+      if (is.null(info)) {
+        stop("Job status unknown??")
+      }
+      if (info$status != 'SUCCESS') {
+        stop(sprintf("[%s]  is not in success state ==> [%s]",self$uuid,status))
+      }
+      content = self$conn$get(sprintf('job/content/%s',self$uuid))
+      files = read.table(text=content,sep=',',header=TRUE, check.names = F)
+      return(qes.microsvc.JobOutput$new(conn = self$conn, uuid = self$uuid, files = files))
     }
+    
+  )
+)
+}
+
+#' qes.microsvc.JobOutput
+#' Generic Job Output Class (Base)
+
+{
+qes.microsvc.JobOutput <- R6Class(
+  classname = "JobOutput",
+  public = list(
+    conn = NULL,
+    uuid = NULL,
+    udata  = NULL,
+    data = NULL,
+    files = NULL,
+    initialize = function(conn, uuid, files) {
+      self$conn = conn
+      self$uuid = uuid
+      self$files = files
+      self$files$Key <- as.character(self$files$Key)
+      self$files$Obj <- sapply(self$files$Key,function(x) {
+        dir.1 <- dirname(x)
+        if (dir.1 == '.') {
+          self$.names(x)
+        } else {
+          sprintf("%s/%s",dirname(x),self$.names(x))
+        }
+      })
+    },
+    
+    .raw = function(key) {
+      self$conn$get(sprintf('job/data/%s/%s',self$uuid,gsub(x = key, pattern = '/',replacement = '::', fixed = T)))
+    },
+    
+    .get_data = function(key) {
+      content = self$.raw(key)
+      dtbl <- read.table(text=content,sep=',',header=TRUE, check.names = F)
+      
+      file = basename(key)
+      structure = substr(file,1,1)
+      data <- switch(structure, 
+                     M = {
+                       m <- as.matrix(dtbl[,-1])
+                       rownames(m) <- dtbl[,1]
+                       m
+                     },
+                     D = dtbl,
+                     V = setNames(dtbl[,1],rownames(dtbl)),
+                     S = dtbl[1,1]
+      )
+      return(data)
+    },
+    
+    get_output = function() {
+      if (!is.null(self$data)) return(self$data)
+      keys <- setNames(self$files$Key,self$files$Key)
+      self$data = self$.deserialize(keys)
+      return(self$data)
+    },
+    
+    get_object = function(obj) {
+      ix <- which(startsWith(self$files$Obj,obj))
+      if (length(ix) == 0) return (NULL)
+      files <- self$files[ix,,drop=F]
+      if (!is.null(self$data)) {
+        return(self$data)
+      }
+      return(self$.deserialize(setNames(files$Key,files$Key)))
+    },
+    
+    .deserialize = function(keys) {
+      info <- t(sapply(keys,function(key) {
+        v <- strsplit(key,split='/',fixed=T)[[1]] 
+        if (length(v) == 1) {
+          return(c('.',v))
+        } else {
+          return(c(v[1],paste0(v[-1],collapse='/')))
+        }
+      }))
+      
+      colnames(info) <- c('Dir','File')
+      rownames(info) <- names(keys)
+      
+      dirs <- unique(info[,'Dir'])
+      l2 <- lapply(dirs, function(dir.1) {
+        
+        ix <- which(info[,'Dir'] == dir.1)
+        ckeys <- info[ix,'File']
+        names(ckeys) <- rownames(info)[ix]
+        if (dir.1 == '.') {
+          l1 <- lapply(names(ckeys),function(key.1) {
+            print(sprintf("Deserializing %s",key.1))
+            data.1 <- self$.get_data(key.1)
+          })
+          names(l1) <- self$.names(names(ckeys))
+          return(l1)
+        } else {
+          l1 <- list(self$.deserialize(
+            setNames(info[ix,'File'],rownames(info)[ix])
+            ))
+          names(l1) <- dir.1
+          return(l1)
+        }
+      })
+      do.call(c,l2)
+      
+    },
+    
+    .names = function(keys) {
+      sapply(keys,function(key.1) {
+        key.1 <- basename(key.1)
+        gsub('.csv','',paste(strsplit(key.1,'_',T)[[1]][-1],collapse='_'),fixed=T)
+      })
+    }
+    
   )
 )
 }
@@ -444,6 +586,7 @@ qes.microsvc.Base <- R6Class(
     data = NULL,
     req = NULL,
     jobs = NULL,
+    version = 1,
     completed = function() {
       self$conn$success_job(self$typeid)
     },
@@ -452,6 +595,9 @@ qes.microsvc.Base <- R6Class(
     },
     .setConn = function(conn) {
       self$conn = conn
+    },
+    .setVersion = function(version) {
+      self$version = version
     },
     wait = function(max_wait_secs) {
       if (is.null(self$esvc)) {
@@ -470,7 +616,7 @@ qes.microsvc.Base <- R6Class(
     },
     set_id = function(uuid) {
       self$data <- NULL
-      self$esvc <- qes.microsvc.EntitySvc$new(self$conn,self$endPoint,uuid)
+      self$esvc <- qes.microsvc.EntitySvc$new(self$conn,self$endPoint,uuid,self$version)
     },
     .set_latest = function(k = 1) {
       self$jobs <- self$completed()
@@ -485,18 +631,42 @@ qes.microsvc.Base <- R6Class(
       self$esvc <- NULL
       self$data <- NULL
       
-      endPoint <- self$endPoint
-      # print(endPoint)
-      print(req)
-      response <- self$conn$post(endPoint,req)
+      
       # print(response)
       # print(rawToChar(response$content))
       self$req <- req
-      self$esvc <- qes.microsvc.EntitySvc$new(self$conn,endPoint,response)
+      
+      endPoint <- self$endPoint
+      # print(endPoint)
+      print(req)
+      if (self$version == 1) {
+        response <- self$conn$post(endPoint,req)
+      } else if (self$version == 2) {
+        response = self$conn$post(paste0('job/submit/',endPoint), req)
+      } else {
+        stop(sprintf("Version [%s] not supported",self$version))
+      }
+      self$esvc <- qes.microsvc.EntitySvc$new(self$conn,endPoint,response,self$version)
     },
-    set_user_data = function(user_data) {
-      self$req <- c(self$req, list(user_data = list( name=user_data, format = 'rdata')))
+    set_user_data = function(name, data, format = 'csv', overwrite = TRUE) {
+      
+      user_data <- qes.microsvc.UserData$new(conn)
+      if (!overwrite) {
+        if (user_data$exists(name)) {
+          stop(sprintf("Data [%s] exists. Set overwrite to TRUE in order to force overwrite"))
+        }
+      }
+      user_data$upload_data(name = name, data = data, format = format)
+      
+      
+      self$req <- c(self$req, list(user_data = list(name = name, format = format)))
       return(self)
+    },
+    get_output = function() {
+      if (is.null(self$esvc)) {
+        stop("Either attach an existing UUID or run a new one")
+      }
+      return(self$esvc$get_job_output())
     },
     get_data = function(file.num = 1) {
       if (!is.null(self$data)) {
@@ -679,6 +849,7 @@ qes.microsvc.Optimizer <- R6Class(
 )
 }
 
+{
 qes.microsvc.UserData <- R6Class(
   classname = "UserDataSvc",
   public = list(
@@ -690,9 +861,13 @@ qes.microsvc.UserData <- R6Class(
       return(self$conn1$upload_file(endpoint = sprintf("port/%s",name), 
                              file = file))
     },
-    upload_data = function(name, data) {
+    upload_data = function(name, data, format) {
       tempfile <- tempfile(pattern = name)
-      saveRDS(data,file=tempfile)
+      if (format == 'rdata') {
+        saveRDS(data,file=tempfile)
+      } else {
+        write.csv(data,file=tempfile, row.names=F)
+      }
       print(tempfile)
       return(self$conn1$upload_file(endpoint = "port", 
                                     file = tempfile, name = name))
@@ -706,9 +881,169 @@ qes.microsvc.UserData <- R6Class(
       ports$Uploaded <- as.POSIXct(ports$Uploaded/1e3, origin = as.Date('1969-12-31'))
       ports$ID <- NULL
       return(ports)
+    }, 
+    exists = function(name) {
+      data <- self$list_data()
+      if (is.null(data)) return(F)
+      if (nrow(data) == 0) return(F)
+      return(name %in% data[,'Name'])
     }
     
   )
 )
+}
 
 
+#' qes.microsvc.HedgeBuilder
+#' 
+{
+qes.microsvc.HedgeBuilder <- R6Class(
+  classname = "HedgeBuilder",
+  inherit = qes.microsvc.Base,
+  public = list(
+    req = list(),
+    endPoint = "hedge",
+    typeid = qes.microsvc.type.HEDGEBUILDER,
+    initialize = function(conn) {
+      self$.setConn(conn)
+      self$.setVersion(2)
+    },
+    set_risk_model = function(risk_model) {
+      self$req[['risk_model']] <- risk_model
+      return(self)
+    },
+    set_template_name = function(template_name){
+      self$req[['template']] <- template_name
+      return(self)
+    },
+    set_notional_value = function(notional_value) {
+      self$req[['notional_value']] <- notional_value
+      return(self)
+    },
+    set_hedge_type = function(hedge_type) {
+      self$req[['hedge_type']] <- hedge_type
+      return(self)
+    },
+    
+    set_factor_to_hedge = function(factor_to_hedge) {
+      ## list of one or more SECTOR, STYLE, COUNTRY, SYSTEMATIC, or other fator name, case sensitive
+      self$req[['factor_to_hedge']] <- factor_to_hedge
+      return(self)
+    },
+    set_factor_to_neutralize = function(self, factor_to_neutralize) {
+      ## list of one or more SECTOR, STYLE, COUNTRY, SYSTEMATIC, or other fator name, case sensitive
+      self$req[['factor_to_neutralize']] <- factor_to_neutralize
+      return(self)
+    },
+    set_auto_neutralization = function(auto_neutralization) {
+      ## default is True'''
+      self$req[['auto_neutralization']] = auto_neutralization
+      return(self)
+    },
+    
+    set_max_number_of_stocks = function(max_number_of_stocks) {
+      self$req[['max_number_of_stocks']] = max_number_of_stocks
+      return(self)
+    },
+    set_max_neutral_exposure = function(max_neutral_exposure) {
+      self$req[['max_neutral_exposure']] = max_neutral_exposure
+      return(self)
+    },
+    
+    set_max_gross_exposure = function(max_gross_exposure) {
+      self$req[['max_gross_exposure']] = max_gross_exposure
+      return(self)
+    },
+    
+    set_max_weight = function(max_weight) {
+      self$req[['max_weight']] = max_weight
+      return(self)
+    },
+    
+    set_min_weight = function(min_weight) {
+      self$req[['min_weight']] = min_weight
+      return(self)
+    },
+    
+    set_max_adv_usage = function(max_adv_usage) {
+      self$req[['max_adv_usage']] = max_adv_usage
+      return(self)
+    },
+    
+    set_default_univ = function(default_univ) {
+      ### FMP_UNIV or CORE_FMP_UNIV, not case sensitive'''
+      self$req[['default_univ']] = default_univ
+      return(self)
+    },
+    
+    set_scalars = function(scalars) {
+      ### list of float point'''
+      self$req[['scalars']] = scalars
+      return(self)
+    },
+    
+    set_hedge_ratio = function(hedge_ratio) {
+      ### RISK or EXP or VOLADJEXP'''
+      self$req[['hedge_ratio']] = hedge_ratio
+      return(self)
+    },
+    
+    set_exclude_condition = function(self, 
+                                     ma_target, 
+                                     hard_to_borrow,
+                                     earning_release_names,
+                                     dual_listings,
+                                     portfolio_holdings) {
+      self$req[['exclusions']] = list(
+          ma_target = ma_target, 
+          hard_to_borrow = hard_to_borrow,
+          earning_release_names =  earning_release_names,
+          dual_listings  =  dual_listings,
+          portfolio_holdings  =  portfolio_holdings)
+      return(self)
+      
+    },
+    
+    get_results = function() {
+      return(qes.microsvc.HedgeOutput$new(self$get_output()))
+    }
+  )
+)
+}
+
+qes.microsvc.HedgeOutput <- R6Class(
+  classname = "HedgeOutput",
+  public = list(
+    output = NULL,
+    initialize = function(output) {
+      self$output <- output
+    },
+    .get = function(key) {
+      paths <- strsplit(key,'/',fixed=T)[[1]]
+      v <- self$output$get_object(key)
+      if (is.null(v)) return(NULL)
+      for (p in paths) {
+        v <- v[[p]]
+      }
+      return(v)
+    },
+    get_baskets = function() {
+      return(self$.get('baskets'))
+    },
+    get_basket = function(basket_name) {
+      self$.get(sprintf("baskets/%s",basket_name))
+    },
+    get_standalone_summary = function() {
+      self$.get("summary/standalone_summary")
+    },
+    get_afterhedge_summary = function() {
+      self$.get("summary/afterhedge_summary")
+    },
+    get_standalone_attribution = function() {
+      self$.get("analysis/standalone_attr")
+    },
+    get_afterhedge_attribution = function() {
+      self$.get("analysis/afterhedge_attr")
+    }
+  )
+)
