@@ -989,17 +989,20 @@ qes.microsvc.HedgeBuilder <- R6Class(
     },
     
     set_exclude_condition = function(self, 
-                                     ma_target, 
-                                     hard_to_borrow,
-                                     earning_release_names,
-                                     dual_listings,
-                                     portfolio_holdings) {
+                                     ma_target=FALSE, 
+                                     hard_to_borrow=FALSE,
+                                     earning_release_names=FALSE,
+                                     dual_listings=FALSE,
+                                     portfolio_holdings=FALSE,
+                                     firmwide_restrictions=FALSE) {
       self$req[['exclusions']] = list(
           ma_target = ma_target, 
           hard_to_borrow = hard_to_borrow,
           earning_release_names =  earning_release_names,
           dual_listings  =  dual_listings,
-          portfolio_holdings  =  portfolio_holdings)
+          portfolio_holdings  =  portfolio_holdings,
+          firmwide_restrictions = firmwide_restrictions
+      )
       return(self)
       
     },

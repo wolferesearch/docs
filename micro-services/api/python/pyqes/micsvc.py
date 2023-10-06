@@ -2334,10 +2334,10 @@ class HedgeBuilder(Base):
         return self
 
     def set_exclude_condition(self, ma_target: bool, hard_to_borrow : bool, 
-        earning_release_names: bool,dual_listings: bool,portfolio_holdings: bool):
+            earning_release_names: bool,dual_listings: bool,portfolio_holdings: bool, firmwide_restrictions: bool):
         self.req['exclusions'] = {'ma_target': ma_target, 'hard_to_borrow': hard_to_borrow,
                 'earning_release_names': earning_release_names, 'dual_listings': dual_listings,
-                'portfolio_holdings': portfolio_holdings}
+                'portfolio_holdings': portfolio_holdings, 'firmwide_restrictions':firmwide_restrictions}
         return self
     
     def get_results(self):
