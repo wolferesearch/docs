@@ -90,5 +90,5 @@ class HFTDB:
             _type_: _description_
         """
         id2 = "FMPLEV{}.{}.{}".format(version,factor,model)
-        print(id2)
+        #print(id2)
         return self.__get__(id2 = id2, starttime = starttime, endtime = endtime, region = region)
