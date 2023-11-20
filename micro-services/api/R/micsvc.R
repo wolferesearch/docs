@@ -954,6 +954,10 @@ qes.microsvc.HedgeBuilder <- R6Class(
       self$req[['max_gross_exposure']] = max_gross_exposure
       return(self)
     },
+
+    add_factor_constraint = function(name, type='Factor', constraint_type='Numerical', target='AfterHedge', lb, ub) {
+      self$req[['factor_constraints']][[length(self$req[['factor_constraints']])+1]] = list(name=name, type=type, constraint_type=constraint_type, target=target, lb=lb, ub=ub)
+    },
     
     set_max_weight = function(max_weight) {
       self$req[['max_weight']] = max_weight
@@ -1006,7 +1010,7 @@ qes.microsvc.HedgeBuilder <- R6Class(
       return(self)
       
     },
-    
+
     get_results = function() {
       return(qes.microsvc.HedgeOutput$new(self$get_output()))
     }

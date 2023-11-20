@@ -2339,6 +2339,10 @@ class HedgeBuilder(Base):
                 'earning_release_names': earning_release_names, 'dual_listings': dual_listings,
                 'portfolio_holdings': portfolio_holdings, 'firmwide_restrictions':firmwide_restrictions}
         return self
+
+    def add_factor_constraint(self, name, lb, ub, type_='Factor', constraint_type='Numerical', target='AfterHedge'):
+        self.req['factor_constraints'].append({'name': name, 'lb': lb, 'ub': ub, 'type': type_, 'constraint_type': constraint_type, 'target': target})
+        return self
     
     def get_results(self):
         return HedgeOutput(self.get_output())
