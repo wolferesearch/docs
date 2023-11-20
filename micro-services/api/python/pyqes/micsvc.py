@@ -2318,9 +2318,77 @@ class HedgeBuilder(Base):
         self.req['max_adv_usage'] = max_adv_usage
         return self
 
-    def set_default_univ(self, default_univ):
-        '''FMP_UNIV or CORE_FMP_UNIV, not case sensitive'''
-        self.req['default_univ'] = default_univ
+    # def set_default_univ(self, default_univ):
+    #     '''FMP_UNIV or CORE_FMP_UNIV, not case sensitive'''
+    #     self.req['default_univ'] = default_univ
+    #     return self
+
+    def set_exclude_condition(
+            self, 
+            ma_target: bool, 
+            hard_to_borrow : bool, 
+            earning_release_names: bool,
+            dual_listings: bool,
+            portfolio_holdings: bool, 
+            firmwide_restrictions: bool
+        ):
+        self.req['exclusions'] = {
+            'ma_target': ma_target, 
+            'hard_to_borrow': hard_to_borrow,
+            'earning_release_names': earning_release_names, 
+            'dual_listings': dual_listings,
+            'portfolio_holdings': portfolio_holdings, 
+            'firmwide_restrictions':firmwide_restrictions
+        }
+        return self
+    
+    def set_hedge_universe(self, universe_ids:list, 
+                           include_gics:list = [], 
+                           exclude_gics:list = [],
+                           min_mktcap_usd:float = 0.0,
+                           max_mktcap_usd:float = -1,
+                           min_adv_usd:float = 0.0,
+                           max_adv_usd:float = -1, 
+                           exclude_tickers:list = []):
+        """ Sets the Hedge Universe for building the portfolio. User can specify, 
+        any of the supported Universe (e.g., US_1, CORE_FMP). Further filtering can be
+        done based on Sector (GICS) and liquidity. See `micsvc.Hedgebuilder.set_exclude_condition` to further 
+        constraint the portfolio. 
+
+        Parameters
+        ----------
+        universe_ids : list
+            Ids of the universes. Should be one of the supported ones, e.g., SP500
+        include_gics : list, optional
+            List of GICS to be included by default all
+        exclude_gics : list, optional
+            List of GICS to be excluded, by default none
+        min_mktcap_usd : int, optional
+            Minimum Market Cap in the portfolio by default 0
+        max_mktcap_usd : int, optional
+            Maximum Market Cap in the portfolio by default -1
+        min_adv_usd : int, optional
+            Minimum ADV (in USD) in the portfolio
+        max_adv_usd : int, optional
+            Maximum ADV (in USD) in the portfolio
+        exclude_tickers : list, optional
+            List of Tickers (exchange) to exclude
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        self.req['hedge_univ'] = {
+            'universe_ids' : universe_ids,
+            'include_gics' : include_gics,
+            'exclude_gics' : exclude_gics,
+            'min_mktcap_usd' : min_mktcap_usd,
+            'max_mktcap_usd' : max_mktcap_usd,
+            'min_adv_usd' : min_adv_usd,
+            'max_adv_usd' : max_adv_usd,
+            'exclude_tickers': exclude_tickers
+        }
         return self
 
     def set_scalars(self, scalars):
@@ -2333,6 +2401,7 @@ class HedgeBuilder(Base):
         self.req['hedge_ratio'] = hedge_ratio
         return self
 
+<<<<<<< HEAD
     def set_exclude_condition(self, ma_target: bool, hard_to_borrow : bool, 
             earning_release_names: bool,dual_listings: bool,portfolio_holdings: bool, firmwide_restrictions: bool):
         self.req['exclusions'] = {'ma_target': ma_target, 'hard_to_borrow': hard_to_borrow,
@@ -2343,6 +2412,9 @@ class HedgeBuilder(Base):
     def add_factor_constraint(self, name, lb, ub, type_='Factor', constraint_type='Numerical', target='AfterHedge'):
         self.req['factor_constraints'].append({'name': name, 'lb': lb, 'ub': ub, 'type': type_, 'constraint_type': constraint_type, 'target': target})
         return self
+=======
+
+>>>>>>> ab6507006a58f1bf9207dfac5a7557880b895bc3
     
     def get_results(self):
         return HedgeOutput(self.get_output())
