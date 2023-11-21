@@ -2401,7 +2401,6 @@ class HedgeBuilder(Base):
         self.req['hedge_ratio'] = hedge_ratio
         return self
 
-<<<<<<< HEAD
     def set_exclude_condition(self, ma_target: bool, hard_to_borrow : bool, 
             earning_release_names: bool,dual_listings: bool,portfolio_holdings: bool, firmwide_restrictions: bool):
         self.req['exclusions'] = {'ma_target': ma_target, 'hard_to_borrow': hard_to_borrow,
@@ -2412,9 +2411,6 @@ class HedgeBuilder(Base):
     def add_factor_constraint(self, name, lb, ub, type_='Factor', constraint_type='Numerical', target='AfterHedge'):
         self.req['factor_constraints'].append({'name': name, 'lb': lb, 'ub': ub, 'type': type_, 'constraint_type': constraint_type, 'target': target})
         return self
-=======
-
->>>>>>> ab6507006a58f1bf9207dfac5a7557880b895bc3
     
     def get_results(self):
         return HedgeOutput(self.get_output())
