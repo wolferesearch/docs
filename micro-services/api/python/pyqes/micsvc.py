@@ -2318,10 +2318,10 @@ class HedgeBuilder(Base):
         self.req['max_adv_usage'] = max_adv_usage
         return self
 
-    # def set_default_univ(self, default_univ):
-    #     '''FMP_UNIV or CORE_FMP_UNIV, not case sensitive'''
-    #     self.req['default_univ'] = default_univ
-    #     return self
+    def set_default_universe(self, default_univ):
+        '''FMP_UNIV or CORE_FMP_UNIV, not case sensitive'''
+        self.req['default_univ'] = default_univ
+        return self
 
     def set_exclude_condition(
             self, 
@@ -2399,13 +2399,6 @@ class HedgeBuilder(Base):
     def set_hedge_ratio(self, hedge_ratio):
         '''RISK or EXP or VOLADJEXP'''
         self.req['hedge_ratio'] = hedge_ratio
-        return self
-
-    def set_exclude_condition(self, ma_target: bool, hard_to_borrow : bool, 
-            earning_release_names: bool,dual_listings: bool,portfolio_holdings: bool, firmwide_restrictions: bool):
-        self.req['exclusions'] = {'ma_target': ma_target, 'hard_to_borrow': hard_to_borrow,
-                'earning_release_names': earning_release_names, 'dual_listings': dual_listings,
-                'portfolio_holdings': portfolio_holdings, 'firmwide_restrictions':firmwide_restrictions}
         return self
 
     def add_factor_constraint(self, name, lb, ub, type_='Factor', constraint_type='Numerical', target='AfterHedge'):
