@@ -2417,8 +2417,8 @@ class HedgeOutput:
         return self.output.get_data('{}/{}'.format(f1, f2)).get(f1).get(f2)
 
     def get_basket_ids(self):
-        keys = [x for x in keys if bool(re.search('^baskets\/D_(S[0-9]{4}).csv$',x))]
-        basket_ids = [re.sub('^baskets\/D_(S[0-9]{4}).csv$','\\1',x) for x in keys]
+        fls = [x for x in self.output.files.Key if bool(re.search('^baskets\/D_(S[0-9]{4}).csv$',x))]
+        basket_ids = [re.sub('^baskets\/D_(S[0-9]{4}).csv$','\\1',x) for x in fls]
         return basket_ids
 
     def get_baskets(self):
