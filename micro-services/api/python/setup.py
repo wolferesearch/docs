@@ -7,4 +7,5 @@ setup(name = 'pyqes',
       author_email = 'karora@wolferesearch.com',
       license = 'Proprietary',
       packages = ['pyqes'],
-      zip_safe = False, requires=['requests','time','os', 'tempfile','datetime','pandas','json','io','urllib'])
+      zip_safe = False, 
+      install_requires=['requests','datetime','pandas'])
