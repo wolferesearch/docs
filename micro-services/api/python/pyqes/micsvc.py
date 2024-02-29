@@ -2318,10 +2318,10 @@ class HedgeBuilder(Base):
         self.req['max_adv_usage'] = max_adv_usage
         return self
 
-    # def set_default_univ(self, default_univ):
-    #     '''FMP_UNIV or CORE_FMP_UNIV, not case sensitive'''
-    #     self.req['default_univ'] = default_univ
-    #     return self
+    def set_default_universe(self, default_univ):
+        '''FMP_UNIV or CORE_FMP_UNIV, not case sensitive'''
+        self.req['default_univ'] = default_univ
+        return self
 
     def set_exclude_condition(
             self, 
@@ -2401,13 +2401,6 @@ class HedgeBuilder(Base):
         self.req['hedge_ratio'] = hedge_ratio
         return self
 
-    def set_exclude_condition(self, ma_target: bool, hard_to_borrow : bool, 
-            earning_release_names: bool,dual_listings: bool,portfolio_holdings: bool, firmwide_restrictions: bool):
-        self.req['exclusions'] = {'ma_target': ma_target, 'hard_to_borrow': hard_to_borrow,
-                'earning_release_names': earning_release_names, 'dual_listings': dual_listings,
-                'portfolio_holdings': portfolio_holdings, 'firmwide_restrictions':firmwide_restrictions}
-        return self
-
     def add_factor_constraint(self, name, lb, ub, type_='Factor', constraint_type='Numerical', target='AfterHedge'):
         self.req['factor_constraints'].append({'name': name, 'lb': lb, 'ub': ub, 'type': type_, 'constraint_type': constraint_type, 'target': target})
         return self
@@ -2424,8 +2417,8 @@ class HedgeOutput:
         return self.output.get_data('{}/{}'.format(f1, f2)).get(f1).get(f2)
 
     def get_basket_ids(self):
-        keys = [x for x in keys if bool(re.search('^baskets\/D_(S[0-9]{4}).csv$',x))]
-        basket_ids = [re.sub('^baskets\/D_(S[0-9]{4}).csv$','\\1',x) for x in keys]
+        fls = [x for x in self.output.files.Key if bool(re.search('^baskets\/D_(S[0-9]{4}).csv$',x))]
+        basket_ids = [re.sub('^baskets\/D_(S[0-9]{4}).csv$','\\1',x) for x in fls]
         return basket_ids
 
     def get_baskets(self):
