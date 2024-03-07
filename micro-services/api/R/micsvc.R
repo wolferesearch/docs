@@ -955,8 +955,8 @@ qes.microsvc.HedgeBuilder <- R6Class(
       return(self)
     },
 
-    add_factor_constraint = function(name, type='Factor', constraint_type='Numerical', target='AfterHedge', lb=999, ub=999) {
-      self$req[['factor_constraints']][[length(self$req[['factor_constraints']])+1]] = list(name=name, type=type, constraint_type=constraint_type, target=target, lb=lb, ub=ub)
+    add_factor_constraint = function(name, type='Factor', constraint_type='Numerical', target='AfterHedge', lb=999, ub=999, include_target_factors=FALSE) {
+      self$req[['factor_constraints']][[length(self$req[['factor_constraints']])+1]] = list(name=name, type=type, constraint_type=constraint_type, target=target, lb=lb, ub=ub, include_target_factors=include_target_factors)
     },
     
     set_max_weight = function(max_weight) {
