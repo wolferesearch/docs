@@ -992,8 +992,7 @@ qes.microsvc.HedgeBuilder <- R6Class(
       return(self)
     },
     
-    set_exclude_condition = function(self, 
-                                     ma_target=FALSE, 
+    set_exclude_condition = function(ma_target=FALSE, 
                                      hard_to_borrow=FALSE,
                                      earning_release_names=FALSE,
                                      dual_listings=FALSE,
