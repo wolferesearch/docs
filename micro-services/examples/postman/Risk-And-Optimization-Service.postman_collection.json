@@ -1,0 +1,747 @@
+{
+	"info": {
+		"_postman_id": "5360a583-bc64-46db-8554-6211f59f292e",
+		"name": "Quant Micro Service",
+		"description": "info:\r\n  description: |\r\n    QES Quant Service API provides easy access to Risk/Optimization API\r\n  version: \"0.0.4\"\r\n  title: QES Quant Service API\r\n  termsOfService: http://wolferesearch.com\r\n  contact:\r\n    email: luo.qes@wolferesearch.com\r\n  license:\r\n    name: Restricted\r\n    url: http://wolferesearch.com\r\ntags:\r\n- name: risk\r\n  description: Custom Build and explore custom Global Equity Risk models using Async API\r\n  externalDocs:\r\n    description: Find out more\r\n    url: http://wolferesearch.com\r\n- name: optimization\r\n  description: Optimize portfolios \r\n- name: optimization\r\n  description: Operations about user\r\n  externalDocs:\r\n    description: Find out more about our optimization\r\n    url: http://wolferesearch.com\r\n  \r\nsecurityDefinitions:\r\n  basicAuth:\r\n    type: basic\r\n    \r\n# Basic auth to the whole API:\r\nsecurity:\r\n  - basicAuth: []\r\n\r\nschemes:\r\n  - \"https\"",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "catalog",
+			"item": [
+				{
+					"name": "Factor List Get",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{pwd}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{uid}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{URL}}/factor/",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"factor",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Universe List Get",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{pwd}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{uid}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{URL}}/universe/",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"universe",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Meta List Get",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{pwd}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{uid}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{URL}}/meta/",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"meta",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Portfolio List Get",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{pwd}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{uid}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{URL}}/portfolio/",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"portfolio",
+								""
+							]
+						},
+						"description": "Get Portfolio List for given authorized user + system supplied"
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Portfolio",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{uid}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{pwd}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "portfolioName",
+									"value": "TrialPort",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{URL}}/portfolio/",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"portfolio",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "template",
+			"item": [
+				{
+					"name": "Template List Get",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{pwd}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{uid}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{URL}}/template/",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"template",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Template Risk Model Parameter Create",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{pwd}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{uid}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n   \"__name__\": \"default37\",\r\n   \"__type__\" : \"ltool.risk.RiskModelBuilder\",\r\n   \"options\" : {\r\n           \"spRisk\" : {\r\n                 \"shrinkage\": 0.5,\r\n                 \"fn\":\"median\"\r\n           }\r\n    },\r\n   \"factors\" : [\r\n            { \"name\" : \"Earnings Yld\"\t\t, \"mnemonic\":\"EPSYLD_LTM_B\"},\r\n            { \"name\" : \"EPS Growth (YoY)\"\t, \"mnemonic\":\"GR_INTR_EPS\"},\r\n            { \"name\" : \"Momentum (12M-1M)\"\t, \"mnemonic\":\"RTN_12M1M\"},\r\n            { \"name\" : \"Revision\"\t\t\t, \"mnemonic\":\"ES_EPS_NTM_R3M\"},\r\n            { \"name\" : \"Profitability\"\t\t, \"mnemonic\":\"ROE\"},\r\n            { \"name\" : \"Volatility\"\t\t\t, \"mnemonic\":\"REAL_VOL\"},\r\n            { \"name\" : \"Size (Mkt. Cap)\"\t, \"mnemonic\":\"MKTCAP_M_USD\"},\r\n            { \"name\" : \"Div Yield\"\t\t\t, \"mnemonic\":\"DIVYLD_TRL\"},\r\n            { \"name\" : \"Book to Market\"\t\t, \"mnemonic\":\"BOOKP\"}\r\n   ],\r\n   \"covArgs\" : {\r\n             \"interval\": 3,\r\n             \"cov.period\" : 252,\r\n             \"var.period\" : 84,\r\n             \"expWeight\": \"true\"\r\n   },\r\n   \"meta\": [\r\n            { \"name\" : \"Sedol\"\t\t\t\t, \"mnemonic\":\"SEDOL\"},\r\n            { \"name\" : \"Ticker\"\t\t\t\t, \"mnemonic\":\"TICKER\"},\r\n            { \"name\" : \"Company Name\"\t\t, \"mnemonic\":\"COMPANYNAME\"},\r\n            { \"name\" : \"Sector\"\t\t\t\t, \"mnemonic\":\"QES_GSECTOR\"},\r\n            { \"name\" : \"Industry Group\"\t\t, \"mnemonic\":\"QES_GGROUP\"},\r\n\t\t\t{ \"name\" : \"Country\"\t\t\t, \"mnemonic\":\"QES_COUNTRY\"},\r\n            { \"name\" : \"Currency\"\t\t\t, \"mnemonic\":\"CURRENCY\"}\r\n   ]\r\n}"
+						},
+						"url": {
+							"raw": "{{URL}}/template/risk-model/",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"template",
+								"risk-model",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Template Optimization Parameter Create",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{uid}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{pwd}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"__name__\":\"default\",\r\n  \"__type__\": \"ltool.opt.Optimizer\",\r\n  \"target_risk\": 0.4,\r\n  \"bound\": [-0.05,0.05],\r\n  \"max_ADV_participation\": 0.05,\r\n  \"max_turnover\": 1.5,\r\n  \"gross_weight\": 2.0,\r\n  \"net_weight\": 0.0,\r\n  \"objective\" : \"maxAlpha\"\r\n}"
+						},
+						"url": {
+							"raw": "{{URL}}/template/optimization/",
+							"host": [
+								"{{URL}}"
+							],
+							"path": [
+								"template",
+								"optimization",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Job List Get",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "93f94950-8fff-4862-8b7c-71b686dc7896",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "{{uid}}",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "{{pwd}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{URL}}/job/",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"job",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New Custom Risk Model Request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "10a645be-edd3-4d1f-913b-243ec31ae525",
+						"exec": [
+							"postman.setEnvironmentVariable(\"ActvieUUID\", responseBody);\r",
+							"//console.log(postman.getEnvironmentVariable(\"ActvieUUID\"))\r",
+							"\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "{{uid}}",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "{{pwd}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"universe\": \"SP500\",\r\n\"template\": \"default\",\r\n\"startDate\": \"2018-09-30\",\r\n\"endDate\": \"2018-11-30\",\r\n\"freq\": \"1me\"\r\n}\r\n"
+				},
+				"url": {
+					"raw": "{{URL}}/risk-model/",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"risk-model",
+						""
+					]
+				},
+				"description": "Creates New Risk Model"
+			},
+			"response": []
+		},
+		{
+			"name": "Risk Model List Dates - specified EntityId",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "{{uid}}",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "{{pwd}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{URL}}/risk-model/{{ActvieUUID}}/",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"risk-model",
+						"{{ActvieUUID}}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Risk Model List Files - specified EntityId & Date",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "{{uid}}",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "{{pwd}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{URL}}/risk-model/{{ActvieUUID}}/2018-11-30/",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"risk-model",
+						"{{ActvieUUID}}",
+						"2018-11-30",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Risk Model Get File COV Get - specified EntityId, Date, File",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "{{uid}}",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "{{pwd}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{URL}}/risk-model/{{ActvieUUID}}/2018-11-30/R1_D1_20181130.cov",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"risk-model",
+						"{{ActvieUUID}}",
+						"2018-11-30",
+						"R1_D1_20181130.cov"
+					]
+				},
+				"description": "Get Risk File COV Get - specified EntityId, Date, File"
+			},
+			"response": []
+		},
+		{
+			"name": "New Optimization Request",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "9903dc24-21ee-4ab8-823f-f785831a534c",
+						"exec": [
+							"postman.setEnvironmentVariable(\"ActvieUUID\", responseBody);\r",
+							"//console.log(postman.getEnvironmentVariable(\"ActvieUUID\"))"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "{{uid}}",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "{{pwd}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"userName\" : \"hjain\",\r\n   \"alpha\": \"QES_LEAP_1_SCORE\",\r\n   \"template\" : \"default\",\r\n   \"portfolio\" : \"SP500\",\r\n   \"startDate\" : \"2018-07-30\",\r\n   \"endDate\" : \"2018-12-31\",\r\n   \"freq\" : \"1me\",\r\n   \"notionalValue\" : 100000000,\r\n   \"baseCurrency\" : \"USD\",\r\n   \"riskModel\" : {\r\n     \"universe\": \"SP500\",\r\n     \"template\" : \"default\"\r\n   }\r\n}"
+				},
+				"url": {
+					"raw": "{{URL}}/optimization/",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"optimization",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Optimization Model Status & List Files  - specified EntityId",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "0667c8ba-b7cd-4eef-bee1-be8bd78c1579",
+						"exec": [
+							"var json = JSON.parse(responseBody);",
+							"//postman.setEnvironmentVariable(\"ActvieUUID\", responseBody);",
+							"console.log(json.status);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{pwd}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{uid}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{URL}}/optimization/{{ActvieUUID}}",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"optimization",
+						"{{ActvieUUID}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Optimization Model List Files  - specified EntityId, File",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "username",
+							"value": "{{uid}}",
+							"type": "string"
+						},
+						{
+							"key": "password",
+							"value": "{{pwd}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{URL}}/optimization/{{ActvieUUID}}/Weights.csv",
+					"host": [
+						"{{URL}}"
+					],
+					"path": [
+						"optimization",
+						"{{ActvieUUID}}",
+						"Weights.csv"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "6cf54bad-31ab-4af1-a7c4-190e4abceee1",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "a1cac714-6440-432d-89cc-52b70898a88b",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

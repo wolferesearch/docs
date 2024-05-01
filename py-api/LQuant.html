@@ -1,0 +1,819 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module LQuant</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>LQuant</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/ubuntu/projects/lquantPy/lquantPy/LQuant.py">/home/ubuntu/projects/lquantPy/lquantPy/LQuant.py</a></font></td></tr></table>
+    <p></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="csv.html">csv</a><br>
+<a href="logging.html">logging</a><br>
+</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+<a href="os.html">os</a><br>
+</td><td width="25%" valign=top><a href="pandas.html">pandas</a><br>
+<a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top><a href="tempfile.html">tempfile</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="builtins.html#object">builtins.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="LQuant.html#BaseWrap">BaseWrap</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="LQuant.html#LQOptPortfolio">LQOptPortfolio</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#LQOptimizer">LQOptimizer</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#LQRiskModelBuilder">LQRiskModelBuilder</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="LQuant.html#LQBacktestResult">LQBacktestResult</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#LQEnv">LQEnv</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#LQExportedData">LQExportedData</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#LQGenericData">LQGenericData</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#LQMultiFactorAnalytics">LQMultiFactorAnalytics</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#LQPort">LQPort</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#LQRiskModel">LQRiskModel</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#LQuant">LQuant</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#MultiFactorBacktest">MultiFactorBacktest</a>
+</font></dt><dt><font face="helvetica, arial"><a href="LQuant.html#TempVar">TempVar</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="BaseWrap">class <strong>BaseWrap</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="BaseWrap-__init__"><strong>__init__</strong></a>(self, env, handle)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="BaseWrap-name"><strong>name</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQBacktestResult">class <strong>LQBacktestResult</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;is&nbsp;a&nbsp;thin&nbsp;wrapper&nbsp;on&nbsp;backtest&nbsp;results&nbsp;<a href="builtins.html#object">object</a>&nbsp;exposing&nbsp;all&nbsp;items&nbsp;in&nbsp;the&nbsp;list&nbsp;<a href="builtins.html#object">object</a><br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LQBacktestResult-CAGR"><strong>CAGR</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-IC_decay"><strong>IC_decay</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-IC_stats"><strong>IC_stats</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-__init__"><strong>__init__</strong></a>(self, analytics, res)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQBacktestResult-__repr__"><strong>__repr__</strong></a>(self)</dt><dd><tt>Return&nbsp;repr(self).</tt></dd></dl>
+
+<dl><dt><a name="LQBacktestResult-__str__"><strong>__str__</strong></a>(self)</dt><dd><tt>Return&nbsp;str(self).</tt></dd></dl>
+
+<dl><dt><a name="LQBacktestResult-basket_returns"><strong>basket_returns</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-coverage"><strong>coverage</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-coverage_raw"><strong>coverage_raw</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-cum_IC_decay"><strong>cum_IC_decay</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-cum_hit_rate"><strong>cum_hit_rate</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-get_dates"><strong>get_dates</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-hit_rate"><strong>hit_rate</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-maximum_draw_down"><strong>maximum_draw_down</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-plot_CAGR"><strong>plot_CAGR</strong></a>(self, title)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-plot_IC"><strong>plot_IC</strong></a>(self, title)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-plot_coverage"><strong>plot_coverage</strong></a>(self, title)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-plot_coverage_raw"><strong>plot_coverage_raw</strong></a>(self, title)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-plot_seasonal_IC"><strong>plot_seasonal_IC</strong></a>(self, title)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-plot_sharpe_ratio"><strong>plot_sharpe_ratio</strong></a>(self, title)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-plot_turnover"><strong>plot_turnover</strong></a>(self, title)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-plot_wealth"><strong>plot_wealth</strong></a>(self, title)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-plot_wealthLS"><strong>plot_wealthLS</strong></a>(self, title)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-serial_correlation"><strong>serial_correlation</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-sharpe_ratio"><strong>sharpe_ratio</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-turnover"><strong>turnover</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-volatility"><strong>volatility</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQBacktestResult-wealth"><strong>wealth</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQEnv">class <strong>LQEnv</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;<a href="#LQEnv">LQEnv</a>:&nbsp;Direct&nbsp;handle&nbsp;to&nbsp;the&nbsp;analytics&nbsp;environment&nbsp;(R&nbsp;Kernel)<br>
+This&nbsp;class&nbsp;should&nbsp;only&nbsp;be&nbsp;used&nbsp;for&nbsp;diagnostic&nbsp;purposes.&nbsp;A&nbsp;few&nbsp;things&nbsp;that<br>
+can&nbsp;be&nbsp;done&nbsp;here<br>
+-&nbsp;Lists&nbsp;down&nbsp;variable&nbsp;in&nbsp;the&nbsp;environment<br>
+-&nbsp;Save&nbsp;variable&nbsp;to&nbsp;a&nbsp;file<br>
+-&nbsp;Run&nbsp;a&nbsp;custom&nbsp;command<br>
+-&nbsp;Import&nbsp;values&nbsp;into&nbsp;the&nbsp;environment&nbsp;(arrays&nbsp;and&nbsp;matrices)<br>
+-&nbsp;Get&nbsp;an&nbsp;<a href="builtins.html#object">object</a>&nbsp;from&nbsp;the&nbsp;environment<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LQEnv-__init__"><strong>__init__</strong></a>(self, context, kernel)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQEnv-get"><strong>get</strong></a>(self, name)</dt><dd><tt>Gets&nbsp;handle&nbsp;to&nbsp;an&nbsp;<a href="builtins.html#object">object</a>&nbsp;in&nbsp;the&nbsp;environment<br>
+:param&nbsp;name:&nbsp;Name&nbsp;of&nbsp;the&nbsp;<a href="builtins.html#object">object</a><br>
+:return:&nbsp;Handle&nbsp;to&nbsp;the&nbsp;<a href="builtins.html#object">object</a></tt></dd></dl>
+
+<dl><dt><a name="LQEnv-import_double_array"><strong>import_double_array</strong></a>(self, name, array, names)</dt><dd><tt>Imports&nbsp;a&nbsp;numeric&nbsp;array&nbsp;into&nbsp;the&nbsp;environment<br>
+:param&nbsp;name:&nbsp;Name&nbsp;to&nbsp;assign<br>
+:param&nbsp;array:&nbsp;Array&nbsp;or&nbsp;list&nbsp;of&nbsp;double&nbsp;values<br>
+:param&nbsp;names:&nbsp;Optional&nbsp;names&nbsp;for&nbsp;the&nbsp;values<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQEnv-import_double_matrix"><strong>import_double_matrix</strong></a>(self, name, matrix, rownames, colnames)</dt><dd><tt>Imports&nbsp;a&nbsp;numeric&nbsp;matrix&nbsp;into&nbsp;the&nbsp;environment<br>
+:param&nbsp;name:&nbsp;Name&nbsp;to&nbsp;assign<br>
+:param&nbsp;matrix:&nbsp;Data&nbsp;matrix&nbsp;(Pandas&nbsp;data&nbsp;frame)<br>
+:param&nbsp;rownames:&nbsp;Not&nbsp;used<br>
+:param&nbsp;colnames:&nbsp;Not&nbsp;used<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQEnv-import_string_array"><strong>import_string_array</strong></a>(self, name, array, names)</dt><dd><tt>Imports&nbsp;a&nbsp;string&nbsp;array&nbsp;into&nbsp;the&nbsp;environment<br>
+:param&nbsp;name:&nbsp;Name&nbsp;to&nbsp;assign<br>
+:param&nbsp;array:&nbsp;Array&nbsp;or&nbsp;list&nbsp;of&nbsp;strings<br>
+:param&nbsp;names:&nbsp;Optional&nbsp;names&nbsp;for&nbsp;the&nbsp;values<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQEnv-import_string_matrix"><strong>import_string_matrix</strong></a>(self, name, matrix, rownames, colnames)</dt><dd><tt>Imports&nbsp;a&nbsp;string&nbsp;matrix&nbsp;into&nbsp;the&nbsp;environment<br>
+:param&nbsp;name:&nbsp;Name&nbsp;of&nbsp;the<br>
+:param&nbsp;matrix:&nbsp;Pandas&nbsp;data&nbsp;frame&nbsp;containing&nbsp;string&nbsp;values<br>
+:param&nbsp;rownames:&nbsp;Not&nbsp;used<br>
+:param&nbsp;colnames:&nbsp;Not&nbsp;used<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQEnv-list"><strong>list</strong></a>(self)</dt><dd><tt>List&nbsp;down&nbsp;all&nbsp;variables&nbsp;in&nbsp;the&nbsp;environment<br>
+:return:&nbsp;Array&nbsp;containing&nbsp;list&nbsp;of&nbsp;variable&nbsp;names</tt></dd></dl>
+
+<dl><dt><a name="LQEnv-run"><strong>run</strong></a>(self, cmd)</dt><dd><tt>Runs&nbsp;a&nbsp;custom&nbsp;command<br>
+:param&nbsp;cmd:&nbsp;String&nbsp;command<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQEnv-save"><strong>save</strong></a>(self, v, file)</dt><dd><tt>Saves&nbsp;<a href="builtins.html#object">object</a>&nbsp;to&nbsp;a&nbsp;file<br>
+:param&nbsp;v:&nbsp;Name&nbsp;of&nbsp;the&nbsp;<a href="builtins.html#object">object</a>&nbsp;to&nbsp;save<br>
+:param&nbsp;file:&nbsp;Name&nbsp;of&nbsp;the&nbsp;file<br>
+:return:</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQExportedData">class <strong>LQExportedData</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LQExportedData-__init__"><strong>__init__</strong></a>(self, dirpath)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQExportedData-asNP"><strong>asNP</strong></a>(self, attrib)</dt></dl>
+
+<dl><dt><a name="LQExportedData-attribs"><strong>attribs</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQExportedData-dates"><strong>dates</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQExportedData-exportAsNP"><strong>exportAsNP</strong></a>(self, savedir)</dt></dl>
+
+<dl><dt><a name="LQExportedData-load"><strong>load</strong></a>(self, attrib)</dt></dl>
+
+<dl><dt><a name="LQExportedData-loadAll"><strong>loadAll</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQExportedData-secs"><strong>secs</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQExportedData-values"><strong>values</strong></a>(self, sec, attrib)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQGenericData">class <strong>LQGenericData</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>An&nbsp;instance&nbsp;of&nbsp;this&nbsp;class&nbsp;is&nbsp;returned&nbsp;by&nbsp;all&nbsp;interfaces&nbsp;of&nbsp;<a href="#LQuant">LQuant</a>.&nbsp;The&nbsp;class&nbsp;allows<br>
+&nbsp;navigating&nbsp;through&nbsp;the&nbsp;data&nbsp;item&nbsp;and&nbsp;also&nbsp;opens&nbsp;up&nbsp;analytics&nbsp;functions<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LQGenericData-__as_data_frame__"><strong>__as_data_frame__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-__getitem__"><strong>__getitem__</strong></a>(self, key)</dt></dl>
+
+<dl><dt><a name="LQGenericData-__init__"><strong>__init__</strong></a>(self, context, ref, deleteOnExit=False)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQGenericData-__repr__"><strong>__repr__</strong></a>(self)</dt><dd><tt>Return&nbsp;repr(self).</tt></dd></dl>
+
+<dl><dt><a name="LQGenericData-__str__"><strong>__str__</strong></a>(self)</dt><dd><tt>Return&nbsp;str(self).</tt></dd></dl>
+
+<dl><dt><a name="LQGenericData-append_double_matrix"><strong>append_double_matrix</strong></a>(self, name, matrix)</dt></dl>
+
+<dl><dt><a name="LQGenericData-append_string_matrix"><strong>append_string_matrix</strong></a>(self, name, matrix)</dt></dl>
+
+<dl><dt><a name="LQGenericData-as_double"><strong>as_double</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-as_double_array"><strong>as_double_array</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-as_large_data_frame"><strong>as_large_data_frame</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-as_matrix"><strong>as_matrix</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-as_string"><strong>as_string</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-as_string_array"><strong>as_string_array</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-columns"><strong>columns</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-data_type"><strong>data_type</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-element"><strong>element</strong></a>(self, indx)</dt></dl>
+
+<dl><dt><a name="LQGenericData-get_double"><strong>get_double</strong></a>(self, i)</dt></dl>
+
+<dl><dt><a name="LQGenericData-get_string"><strong>get_string</strong></a>(self, i)</dt></dl>
+
+<dl><dt><a name="LQGenericData-is_array"><strong>is_array</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-is_data_frame"><strong>is_data_frame</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-is_list"><strong>is_list</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-is_matrix"><strong>is_matrix</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-is_primitive"><strong>is_primitive</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-length"><strong>length</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-name"><strong>name</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-names"><strong>names</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-num_cols"><strong>num_cols</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-num_rows"><strong>num_rows</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-rows"><strong>rows</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQGenericData-structure"><strong>structure</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQMultiFactorAnalytics">class <strong>LQMultiFactorAnalytics</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Wrapper&nbsp;Class&nbsp;that&nbsp;provides&nbsp;access&nbsp;to&nbsp;multi-factor&nbsp;analytics.&nbsp;Class&nbsp;provides&nbsp;access&nbsp;to:<br>
+&nbsp;1.&nbsp;Neutralization&nbsp;and&nbsp;Inversion&nbsp;of&nbsp;factors<br>
+&nbsp;2.&nbsp;Compute&nbsp;Risk&nbsp;Parity&nbsp;based&nbsp;factor&nbsp;weights<br>
+&nbsp;3.&nbsp;Compute&nbsp;Factor&nbsp;score&nbsp;using&nbsp;different&nbsp;weighting&nbsp;scheme<br>
+&nbsp;4.&nbsp;Compute&nbsp;Factor&nbsp;score&nbsp;for&nbsp;sector-by-sector&nbsp;factor&nbsp;weighting<br>
+&nbsp;<br>
+&nbsp;The&nbsp;class&nbsp;is&nbsp;designed&nbsp;to&nbsp;append&nbsp;to&nbsp;existing&nbsp;data&nbsp;<a href="builtins.html#object">object</a>&nbsp;in&nbsp;the&nbsp;R&nbsp;Kernel&nbsp;environment.&nbsp;API&nbsp;caller<br>
+&nbsp;can&nbsp;choose<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LQMultiFactorAnalytics-__init__"><strong>__init__</strong></a>(self, wq, env, data, inflag)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-backtest"><strong>backtest</strong></a>(self, factors, bins, align=True)</dt><dd><tt>Performs&nbsp;simple&nbsp;backtest&nbsp;for&nbsp;multiple&nbsp;factors<br>
+:param&nbsp;factors:&nbsp;List&nbsp;of&nbsp;factors&nbsp;to&nbsp;backtest<br>
+:param&nbsp;bins:&nbsp;Number&nbsp;of&nbsp;bins<br>
+:param&nbsp;align:<br>
+:return:&nbsp;Multi-backtest&nbsp;<a href="builtins.html#object">object</a></tt></dd></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-basic_neutralize_factor"><strong>basic_neutralize_factor</strong></a>(self, varname, factor, method, class_matrix=None)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-generate_excel"><strong>generate_excel</strong></a>(self, results)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-get_ic_alpha"><strong>get_ic_alpha</strong></a>(self, varname, factors, period=60)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-get_risk_parity_weights"><strong>get_risk_parity_weights</strong></a>(self, varname, factors, alpha=None)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-get_risk_parity_weights_using_ic"><strong>get_risk_parity_weights_using_ic</strong></a>(self, varname, factors, period=60, alpha=None)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-get_sector_risk_parity_weights"><strong>get_sector_risk_parity_weights</strong></a>(self, varname, factors, class_flag='QES_GSECTOR', alpha=None)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-get_sector_risk_parity_weights_ic"><strong>get_sector_risk_parity_weights_ic</strong></a>(self, varname, factors, class_flag='QES_GSECTOR', alpha=None, period=60)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-get_vol_weights"><strong>get_vol_weights</strong></a>(self, varname, factors)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-invert_factors"><strong>invert_factors</strong></a>(self, factors)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-mask_factors"><strong>mask_factors</strong></a>(self, factors)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-merge_factor_values"><strong>merge_factor_values</strong></a>(self, factor, from_value, to_value)</dt></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-multi_factor_sector_score"><strong>multi_factor_sector_score</strong></a>(self, varname, factors, class_flag, weights)</dt><dd><tt>Computes&nbsp;multi-factor&nbsp;score&nbsp;using&nbsp;the&nbsp;weighting&nbsp;of&nbsp;factors&nbsp;by&nbsp;sector<br>
+:param&nbsp;varname:&nbsp;Name&nbsp;of&nbsp;the&nbsp;Score&nbsp;to&nbsp;assign&nbsp;to&nbsp;the&nbsp;data&nbsp;container<br>
+:param&nbsp;factors:&nbsp;List&nbsp;of&nbsp;factors<br>
+:param&nbsp;class_flag:&nbsp;Name&nbsp;of&nbsp;the&nbsp;classification&nbsp;(sector)&nbsp;flag,&nbsp;e.g.,&nbsp;QES_GSECTOR<br>
+:param&nbsp;weights:&nbsp;Weights&nbsp;List.&nbsp;This&nbsp;should&nbsp;be&nbsp;a&nbsp;list&nbsp;of&nbsp;matrices&nbsp;with&nbsp;each&nbsp;element&nbsp;containing&nbsp;matrix&nbsp;with<br>
+time&nbsp;series&nbsp;weights<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQMultiFactorAnalytics-multi_factor_weighting"><strong>multi_factor_weighting</strong></a>(self, varname, factors, weights)</dt><dd><tt>Computes&nbsp;multi-factor&nbsp;score&nbsp;using&nbsp;the&nbsp;weighting&nbsp;of&nbsp;the&nbsp;factor<br>
+:param&nbsp;varname:&nbsp;Name&nbsp;of&nbsp;the&nbsp;Weighting&nbsp;to&nbsp;assign&nbsp;to&nbsp;the&nbsp;data&nbsp;container<br>
+:param&nbsp;factors:&nbsp;List&nbsp;of&nbsp;factors<br>
+:param&nbsp;weights:&nbsp;Weight&nbsp;matrix<br>
+:return:</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQOptPortfolio">class <strong>LQOptPortfolio</strong></a>(<a href="LQuant.html#BaseWrap">BaseWrap</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Wrapper&nbsp;for&nbsp;Optimized&nbsp;Portfolio.&nbsp;Provides&nbsp;basic&nbsp;information&nbsp;about&nbsp;optimized&nbsp;portfolio<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="LQuant.html#LQOptPortfolio">LQOptPortfolio</a></dd>
+<dd><a href="LQuant.html#BaseWrap">BaseWrap</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="LQOptPortfolio-__init__"><strong>__init__</strong></a>(self, env, handle)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQOptPortfolio-alpha"><strong>alpha</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQOptPortfolio-status"><strong>status</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQOptPortfolio-txn_cost"><strong>txn_cost</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQOptPortfolio-variance"><strong>variance</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQOptPortfolio-weights"><strong>weights</strong></a>(self)</dt></dl>
+
+<hr>
+Methods inherited from <a href="LQuant.html#BaseWrap">BaseWrap</a>:<br>
+<dl><dt><a name="LQOptPortfolio-name"><strong>name</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="LQuant.html#BaseWrap">BaseWrap</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQOptimizer">class <strong>LQOptimizer</strong></a>(<a href="LQuant.html#BaseWrap">BaseWrap</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Optimizer&nbsp;Class.&nbsp;Uses&nbsp;Risk&nbsp;Model&nbsp;Builder,&nbsp;Risk&nbsp;Model&nbsp;,&nbsp;Date&nbsp;and&nbsp;Notional&nbsp;Value<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="LQuant.html#LQOptimizer">LQOptimizer</a></dd>
+<dd><a href="LQuant.html#BaseWrap">BaseWrap</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="LQOptimizer-__init__"><strong>__init__</strong></a>(self, env, risk_model_builder, risk_model, date, notional_value)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQOptimizer-build_maximize_alpha_portfolio"><strong>build_maximize_alpha_portfolio</strong></a>(self, alpha)</dt></dl>
+
+<dl><dt><a name="LQOptimizer-build_minimum_risk_portfolio"><strong>build_minimum_risk_portfolio</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQOptimizer-limit_risk_to"><strong>limit_risk_to</strong></a>(self, risk_target)</dt></dl>
+
+<dl><dt><a name="LQOptimizer-max_long_stock_weight"><strong>max_long_stock_weight</strong></a>(self, max_weight)</dt></dl>
+
+<dl><dt><a name="LQOptimizer-max_short_stock_weight"><strong>max_short_stock_weight</strong></a>(self, max_weight)</dt></dl>
+
+<dl><dt><a name="LQOptimizer-with_long_short_weights"><strong>with_long_short_weights</strong></a>(self, net_weight, gross_weight)</dt></dl>
+
+<dl><dt><a name="LQOptimizer-with_max_adv"><strong>with_max_adv</strong></a>(self, max_adv)</dt></dl>
+
+<hr>
+Methods inherited from <a href="LQuant.html#BaseWrap">BaseWrap</a>:<br>
+<dl><dt><a name="LQOptimizer-name"><strong>name</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="LQuant.html#BaseWrap">BaseWrap</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQPort">class <strong>LQPort</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;<a href="#LQPort">LQPort</a>.&nbsp;Provides&nbsp;access&nbsp;to&nbsp;user&nbsp;uploaded&nbsp;portfolio.&nbsp;It&nbsp;allows&nbsp;the&nbsp;caller&nbsp;to&nbsp;do&nbsp;the&nbsp;following<br>
+-&nbsp;List&nbsp;down&nbsp;constituents<br>
+-&nbsp;Look&nbsp;at&nbsp;summary<br>
+-&nbsp;Look&nbsp;for&nbsp;unmapped<br>
+-&nbsp;Query&nbsp;factors&nbsp;associated&nbsp;with&nbsp;Portfolio<br>
+-&nbsp;Delete&nbsp;portfolio<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LQPort-__init__"><strong>__init__</strong></a>(self, port)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQPort-attributes"><strong>attributes</strong></a>(self)</dt><dd><tt>Lists&nbsp;set&nbsp;of&nbsp;factors&nbsp;associated&nbsp;with&nbsp;the&nbsp;portfolio/data<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQPort-delete"><strong>delete</strong></a>(self)</dt><dd><tt>Deletes&nbsp;the&nbsp;portfolio,&nbsp;should&nbsp;be&nbsp;the&nbsp;owner&nbsp;of&nbsp;the&nbsp;portfolio<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQPort-exists"><strong>exists</strong></a>(self)</dt><dd><tt>Checks&nbsp;if&nbsp;the&nbsp;portfolio&nbsp;exists<br>
+:return:&nbsp;Return&nbsp;True&nbsp;if&nbsp;the&nbsp;portfolio&nbsp;exists&nbsp;otherwise&nbsp;false</tt></dd></dl>
+
+<dl><dt><a name="LQPort-id"><strong>id</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQPort-internal_id"><strong>internal_id</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQPort-owner"><strong>owner</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQPort-summary"><strong>summary</strong></a>(self)</dt><dd><tt>Returns&nbsp;a&nbsp;simple&nbsp;summary&nbsp;of&nbsp;the&nbsp;portfolio/data<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQPort-unmapped"><strong>unmapped</strong></a>(self)</dt><dd><tt>Returns&nbsp;data&nbsp;frame&nbsp;with&nbsp;list&nbsp;of&nbsp;unmapped&nbsp;securities<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQPort-upload_attributes"><strong>upload_attributes</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQRiskModel">class <strong>LQRiskModel</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Risk&nbsp;Model&nbsp;Data&nbsp;Class.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LQRiskModel-__init__"><strong>__init__</strong></a>(self, rmd)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQRiskModel-cov"><strong>cov</strong></a>(self)</dt><dd><tt>Returns&nbsp;factor&nbsp;covariance&nbsp;matrix<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQRiskModel-exp"><strong>exp</strong></a>(self)</dt><dd><tt>Returns&nbsp;exposures&nbsp;(Beta)&nbsp;of&nbsp;the&nbsp;stocks<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQRiskModel-idm"><strong>idm</strong></a>(self)</dt><dd><tt>Returns&nbsp;identity&nbsp;data&nbsp;frame&nbsp;for&nbsp;reference<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQRiskModel-rsk"><strong>rsk</strong></a>(self)</dt><dd><tt>Returns&nbsp;stock&nbsp;idio&nbsp;risk&nbsp;vector<br>
+:return:</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQRiskModelBuilder">class <strong>LQRiskModelBuilder</strong></a>(<a href="LQuant.html#BaseWrap">BaseWrap</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Multi-period&nbsp;Risk&nbsp;Model&nbsp;Builder&nbsp;Class.&nbsp;Generates&nbsp;Risk&nbsp;model&nbsp;on&nbsp;the&nbsp;fly<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="LQuant.html#LQRiskModelBuilder">LQRiskModelBuilder</a></dd>
+<dd><a href="LQuant.html#BaseWrap">BaseWrap</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="LQRiskModelBuilder-__init__"><strong>__init__</strong></a>(self, env, dlname, idxFlag)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQRiskModelBuilder-dates"><strong>dates</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQRiskModelBuilder-get_risk_model"><strong>get_risk_model</strong></a>(self, date)</dt></dl>
+
+<dl><dt><a name="LQRiskModelBuilder-setup_data"><strong>setup_data</strong></a>(self)</dt></dl>
+
+<hr>
+Methods inherited from <a href="LQuant.html#BaseWrap">BaseWrap</a>:<br>
+<dl><dt><a name="LQRiskModelBuilder-name"><strong>name</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="LQuant.html#BaseWrap">BaseWrap</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="LQuant">class <strong>LQuant</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#LQuant">LQuant</a>&nbsp;Gateway&nbsp;Class<br>
+Primary&nbsp;purpose&nbsp;of&nbsp;this&nbsp;class&nbsp;is&nbsp;to&nbsp;interact&nbsp;with&nbsp;the&nbsp;<a href="#LQuant">LQuant</a>&nbsp;application.&nbsp;It&nbsp;provides&nbsp;the&nbsp;following&nbsp;functionalities:<br>
+1.&nbsp;Access&nbsp;to&nbsp;Factor&nbsp;data<br>
+2.&nbsp;Access&nbsp;to&nbsp;Universe<br>
+3.&nbsp;Access&nbsp;to&nbsp;R&nbsp;Analytical&nbsp;environment<br>
+4.&nbsp;Access&nbsp;to&nbsp;Risk&nbsp;Model&nbsp;Generator<br>
+5.&nbsp;Access&nbsp;to&nbsp;Optimization<br>
+6.&nbsp;Access&nbsp;to&nbsp;Multi-factor&nbsp;Analytics&nbsp;Class<br>
+7.&nbsp;Access&nbsp;to&nbsp;portfolio&nbsp;uploader<br>
+8.&nbsp;Access&nbsp;to&nbsp;Backtester<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="LQuant-__init__"><strong>__init__</strong></a>(self)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="LQuant-__js__"><strong>__js__</strong></a>(self, s)</dt></dl>
+
+<dl><dt><a name="LQuant-basic_backtest"><strong>basic_backtest</strong></a>(self, data, req)</dt></dl>
+
+<dl><dt><a name="LQuant-define"><strong>define</strong></a>(self, expression)</dt><dd><tt>Creates&nbsp;a&nbsp;new&nbsp;factor&nbsp;based&nbsp;on&nbsp;expression<br>
+:param&nbsp;expression:&nbsp;Expression&nbsp;(e.g.,&nbsp;AV_PRICE=@mavg(PRCCD,1m))<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQuant-env"><strong>env</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="LQuant-execute"><strong>execute</strong></a>(self, req)</dt><dd><tt>Executes&nbsp;a&nbsp;request.&nbsp;The&nbsp;request&nbsp;<a href="builtins.html#object">object</a>&nbsp;have&nbsp;several&nbsp;mandatory&nbsp;and&nbsp;optional&nbsp;directive.<br>
+For&nbsp;a&nbsp;complete&nbsp;list&nbsp;of&nbsp;directives,&nbsp;refer&nbsp;to&nbsp;documentation<br>
+:param&nbsp;req:&nbsp;Request&nbsp;<a href="builtins.html#object">object</a>&nbsp;constructed&nbsp;using&nbsp;the&nbsp;new_request&nbsp;call<br>
+:return:&nbsp;Instance&nbsp;of&nbsp;Java&nbsp;Handle&nbsp;to&nbsp;the&nbsp;data</tt></dd></dl>
+
+<dl><dt><a name="LQuant-factor_detail"><strong>factor_detail</strong></a>(self, attr, source='COMPUSTAT')</dt><dd><tt>:param&nbsp;attr:&nbsp;Name&nbsp;of&nbsp;the&nbsp;factor<br>
+:param&nbsp;source:&nbsp;Source&nbsp;of&nbsp;the&nbsp;factor&nbsp;(e.g.,&nbsp;COMPUSTAT,CIQ)<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQuant-factor_graph"><strong>factor_graph</strong></a>(self, attr, source='COMPUSTAT')</dt><dd><tt>:param&nbsp;attr:&nbsp;Name&nbsp;of&nbsp;the&nbsp;factor&nbsp;(e.g.,&nbsp;ROE)<br>
+:return:&nbsp;Image&nbsp;png&nbsp;file&nbsp;path&nbsp;with&nbsp;the&nbsp;graphical&nbsp;representation&nbsp;of&nbsp;the&nbsp;execution</tt></dd></dl>
+
+<dl><dt><a name="LQuant-get_data"><strong>get_data</strong></a>(self, req)</dt><dd><tt>Executes&nbsp;a&nbsp;request.&nbsp;The&nbsp;request&nbsp;<a href="builtins.html#object">object</a>&nbsp;have&nbsp;several&nbsp;mandatory&nbsp;and&nbsp;optional&nbsp;directive.<br>
+For&nbsp;a&nbsp;complete&nbsp;list&nbsp;of&nbsp;directives,&nbsp;refer&nbsp;to&nbsp;documentation<br>
+:param&nbsp;req:&nbsp;Request&nbsp;<a href="builtins.html#object">object</a>&nbsp;constructed&nbsp;using&nbsp;the&nbsp;new_request&nbsp;call<br>
+:return:&nbsp;Instance&nbsp;of&nbsp;<a href="#LQGenericData">LQGenericData</a>&nbsp;class&nbsp;that&nbsp;can&nbsp;be&nbsp;converted&nbsp;to&nbsp;Pandas&nbsp;data&nbsp;frame</tt></dd></dl>
+
+<dl><dt><a name="LQuant-get_factors"><strong>get_factors</strong></a>(self)</dt><dd><tt>Lists&nbsp;down&nbsp;available&nbsp;factors<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQuant-get_port"><strong>get_port</strong></a>(self, _id)</dt><dd><tt>Returns&nbsp;handle&nbsp;to&nbsp;the&nbsp;portfolio<br>
+:param&nbsp;_id:&nbsp;Id&nbsp;of&nbsp;the&nbsp;portfolio<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQuant-get_user_resource"><strong>get_user_resource</strong></a>(self, username, type)</dt><dd><tt>:param&nbsp;username:&nbsp;Username&nbsp;for&nbsp;which&nbsp;to&nbsp;run&nbsp;the&nbsp;query<br>
+:param&nbsp;type:&nbsp;Type&nbsp;of&nbsp;query&nbsp;(universe,factor,meta)<br>
+:return:&nbsp;Data&nbsp;frame&nbsp;containing&nbsp;the&nbsp;resource&nbsp;information</tt></dd></dl>
+
+<dl><dt><a name="LQuant-load_csv_data"><strong>load_csv_data</strong></a>(self, filename, varname, idCol, dateCol)</dt></dl>
+
+<dl><dt><a name="LQuant-multi_factor_analysis"><strong>multi_factor_analysis</strong></a>(self, data, inflag)</dt><dd><tt>&nbsp;&nbsp;&nbsp;&nbsp;Provides&nbsp;handle&nbsp;to&nbsp;analytics&nbsp;class&nbsp;that&nbsp;allows&nbsp;multi&nbsp;factor&nbsp;analysis<br>
+:param&nbsp;data:&nbsp;Data&nbsp;<a href="builtins.html#object">object</a>&nbsp;fetched&nbsp;previously&nbsp;using&nbsp;get_data&nbsp;call<br>
+:param&nbsp;inflag:&nbsp;String&nbsp;in&nbsp;flag&nbsp;(e.g.,&nbsp;IN_SP500)<br>
+:return:&nbsp;Handle&nbsp;to&nbsp;the&nbsp;Analytics&nbsp;class</tt></dd></dl>
+
+<dl><dt><a name="LQuant-new_request"><strong>new_request</strong></a>(self)</dt><dd><tt>Builds&nbsp;an&nbsp;empty&nbsp;request&nbsp;<a href="builtins.html#object">object</a>.&nbsp;The&nbsp;<a href="builtins.html#object">object</a>&nbsp;exposes&nbsp;a&nbsp;fluent&nbsp;API&nbsp;to&nbsp;add&nbsp;parameters&nbsp;to&nbsp;request<br>
+:return:&nbsp;Data&nbsp;Query&nbsp;Request&nbsp;Object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;from(yyyy-mm-dd)&nbsp;start&nbsp;date<br>
+&nbsp;&nbsp;&nbsp;&nbsp;to(yyyy-mm-dd)&nbsp;end&nbsp;date<br>
+&nbsp;&nbsp;&nbsp;&nbsp;runFor(universeId)&nbsp;universe&nbsp;specification<br>
+&nbsp;&nbsp;&nbsp;&nbsp;at(frequency)&nbsp;frequency&nbsp;specification<br>
+&nbsp;&nbsp;&nbsp;&nbsp;a(attribute)&nbsp;attribute.&nbsp;This&nbsp;method&nbsp;can&nbsp;be&nbsp;called&nbsp;multiple&nbsp;times&nbsp;for&nbsp;multiple&nbsp;attributes<br>
+&nbsp;&nbsp;&nbsp;&nbsp;forDates(dates&nbsp;array&nbsp;yyyy-mm-dd)&nbsp;List&nbsp;of&nbsp;dates.&nbsp;Should&nbsp;not&nbsp;be&nbsp;combined&nbsp;with&nbsp;from/to/at&nbsp;directives</tt></dd></dl>
+
+<dl><dt><a name="LQuant-new_risk_model_builder"><strong>new_risk_model_builder</strong></a>(self, data, idxFlagName)</dt><dd><tt>Provides&nbsp;instance&nbsp;of&nbsp;a&nbsp;new&nbsp;risk&nbsp;model&nbsp;builder<br>
+:param&nbsp;data:&nbsp;Data&nbsp;<a href="builtins.html#object">object</a>&nbsp;returned&nbsp;from&nbsp;get_data&nbsp;call<br>
+:param&nbsp;idxFlagName:&nbsp;&nbsp;Name&nbsp;of&nbsp;the&nbsp;index&nbsp;flag<br>
+:return:&nbsp;Handle&nbsp;to&nbsp;Risk&nbsp;Model&nbsp;Builder</tt></dd></dl>
+
+<dl><dt><a name="LQuant-optimizer"><strong>optimizer</strong></a>(self, risk_model_builder, risk_model, date, notional_value)</dt><dd><tt>Provides&nbsp;instance&nbsp;of&nbsp;a&nbsp;new&nbsp;optimization&nbsp;runner<br>
+:param&nbsp;risk_model_builder:&nbsp;Handle&nbsp;to&nbsp;risk&nbsp;model&nbsp;builder<br>
+:param&nbsp;risk_model:&nbsp;Handle&nbsp;to&nbsp;risk&nbsp;model&nbsp;data<br>
+:param&nbsp;date:&nbsp;Date&nbsp;of&nbsp;optimization<br>
+:param&nbsp;notional_value:&nbsp;Notional&nbsp;value&nbsp;of&nbsp;the&nbsp;portfolio&nbsp;to&nbsp;optimize<br>
+:return:</tt></dd></dl>
+
+<dl><dt><a name="LQuant-plan_tree"><strong>plan_tree</strong></a>(self, attr, source='COMPUSTAT')</dt><dd><tt>Return&nbsp;the&nbsp;complete&nbsp;execution&nbsp;tree&nbsp;detail&nbsp;for&nbsp;the&nbsp;factor<br>
+:param&nbsp;attr:&nbsp;Name&nbsp;of&nbsp;the&nbsp;factor&nbsp;(e.g.,&nbsp;ROE)<br>
+:param&nbsp;source:&nbsp;Source&nbsp;of&nbsp;the&nbsp;factor&nbsp;(e.g.,&nbsp;COMPUSTAT,&nbsp;CIQ)<br>
+:return:&nbsp;String&nbsp;with&nbsp;details&nbsp;of&nbsp;execution</tt></dd></dl>
+
+<dl><dt><a name="LQuant-port_list"><strong>port_list</strong></a>(self, username, current_user_only=False)</dt></dl>
+
+<dl><dt><a name="LQuant-port_list_by_user"><strong>port_list_by_user</strong></a>(self, user, current_user_only=True)</dt></dl>
+
+<dl><dt><a name="LQuant-port_upload"><strong>port_upload</strong></a>(self, _id, header, data, _global=False, pit_id=False, short_format=False, user=None)</dt><dd><tt>Uploads&nbsp;data&nbsp;matrix&nbsp;into&nbsp;lquant<br>
+:param&nbsp;id:&nbsp;Unique&nbsp;identifier<br>
+:param&nbsp;header:&nbsp;columns&nbsp;of&nbsp;the&nbsp;data<br>
+:param&nbsp;data:&nbsp;data&nbsp;frame&nbsp;containing&nbsp;data<br>
+:param&nbsp;_global:&nbsp;Boolean&nbsp;flag&nbsp;to&nbsp;indicate&nbsp;if&nbsp;this&nbsp;is&nbsp;Global<br>
+:param&nbsp;pit_id:&nbsp;Boolean&nbsp;flag&nbsp;to&nbsp;indicate&nbsp;if&nbsp;the&nbsp;id&nbsp;is&nbsp;point-in-time<br>
+:param&nbsp;short_format:&nbsp;Boolean&nbsp;flag&nbsp;to&nbsp;indicate&nbsp;if&nbsp;the&nbsp;data&nbsp;is&nbsp;in&nbsp;short&nbsp;format&nbsp;(From-To)<br>
+:return:&nbsp;Handle&nbsp;to&nbsp;portfolio</tt></dd></dl>
+
+<dl><dt><a name="LQuant-port_upload_data"><strong>port_upload_data</strong></a>(self, _id, header, data, _global=False, pit_id=False, short_format=False, user=None)</dt></dl>
+
+<dl><dt><a name="LQuant-port_upload_data_file"><strong>port_upload_data_file</strong></a>(self, _id, filename, _global=False, pit_id=False, short_format=False, user=None)</dt><dd><tt>Uploads&nbsp;raw&nbsp;data&nbsp;into&nbsp;Lquant<br>
+:param&nbsp;_id:&nbsp;Unique&nbsp;identifier&nbsp;for&nbsp;the&nbsp;portfolio<br>
+:param&nbsp;filename:&nbsp;Full&nbsp;path&nbsp;of&nbsp;the&nbsp;file&nbsp;containing&nbsp;constituents<br>
+:param&nbsp;_global:&nbsp;Boolean&nbsp;flag&nbsp;indicating&nbsp;if&nbsp;this&nbsp;to&nbsp;be&nbsp;mapped&nbsp;to&nbsp;US/Canada&nbsp;or&nbsp;Global&nbsp;securities<br>
+:param&nbsp;pit_id:&nbsp;&nbsp;Boolean&nbsp;flag&nbsp;to&nbsp;indicate&nbsp;if&nbsp;the&nbsp;Identifier&nbsp;Point&nbsp;in&nbsp;TIme&nbsp;(Default&nbsp;is&nbsp;False)<br>
+:param&nbsp;short_format:&nbsp;Boolean&nbsp;flag&nbsp;to&nbsp;indicate&nbsp;if&nbsp;the&nbsp;format&nbsp;of&nbsp;the&nbsp;file&nbsp;is&nbsp;long/short&nbsp;format,&nbsp;see&nbsp;documentation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;details<br>
+:param&nbsp;user:&nbsp;Name&nbsp;of&nbsp;the&nbsp;user&nbsp;for&nbsp;which&nbsp;to&nbsp;upload<br>
+:return:&nbsp;Returns&nbsp;a&nbsp;portfolio&nbsp;handle</tt></dd></dl>
+
+<dl><dt><a name="LQuant-port_upload_file"><strong>port_upload_file</strong></a>(self, _id, filename, _global=False, pit_id=False, short_format=False, user=None)</dt><dd><tt>Uploads&nbsp;portfolio&nbsp;and&nbsp;corresponding&nbsp;data&nbsp;into&nbsp;Lquant<br>
+:param&nbsp;_id:&nbsp;Unique&nbsp;identifier&nbsp;for&nbsp;the&nbsp;portfolio<br>
+:param&nbsp;filename:&nbsp;Full&nbsp;path&nbsp;of&nbsp;the&nbsp;file&nbsp;containing&nbsp;constituents<br>
+:param&nbsp;_global:&nbsp;Boolean&nbsp;flag&nbsp;indicating&nbsp;if&nbsp;this&nbsp;to&nbsp;be&nbsp;mapped&nbsp;to&nbsp;US/Canada&nbsp;or&nbsp;Global&nbsp;securities<br>
+:param&nbsp;pit_id:&nbsp;&nbsp;Boolean&nbsp;flag&nbsp;to&nbsp;indicate&nbsp;if&nbsp;the&nbsp;Identifier&nbsp;Point&nbsp;in&nbsp;TIme&nbsp;(Default&nbsp;is&nbsp;False)<br>
+:param&nbsp;short_format:&nbsp;Boolean&nbsp;flag&nbsp;to&nbsp;indicate&nbsp;if&nbsp;the&nbsp;format&nbsp;of&nbsp;the&nbsp;file&nbsp;is&nbsp;long/short&nbsp;format,&nbsp;see&nbsp;documentation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;details<br>
+:return:&nbsp;Returns&nbsp;a&nbsp;portfolio&nbsp;handle</tt></dd></dl>
+
+<dl><dt><a name="LQuant-quantdb_query"><strong>quantdb_query</strong></a>(self, name, query)</dt></dl>
+
+<dl><dt><a name="LQuant-quantdb_user_query"><strong>quantdb_user_query</strong></a>(self, username, name, query)</dt></dl>
+
+<dl><dt><a name="LQuant-search"><strong>search</strong></a>(self, type, query)</dt><dd><tt>:param&nbsp;type:&nbsp;Type&nbsp;of&nbsp;entity&nbsp;(UNIVERSE,&nbsp;ATTRIBUTE,&nbsp;SECURITY)<br>
+:param&nbsp;query:&nbsp;Free&nbsp;format&nbsp;search&nbsp;query<br>
+:return:&nbsp;List&nbsp;of&nbsp;entities&nbsp;matching&nbsp;the</tt></dd></dl>
+
+<dl><dt><a name="LQuant-search_attribute"><strong>search_attribute</strong></a>(self, query)</dt><dd><tt>Searches&nbsp;factors&nbsp;(attributes)&nbsp;based&nbsp;on&nbsp;the&nbsp;string&nbsp;query<br>
+:param&nbsp;query:&nbsp;String&nbsp;query&nbsp;(e.g.,&nbsp;Earnings)<br>
+:return:&nbsp;Data&nbsp;frame&nbsp;with&nbsp;hits</tt></dd></dl>
+
+<dl><dt><a name="LQuant-search_security"><strong>search_security</strong></a>(self, query)</dt><dd><tt>Searches&nbsp;securities&nbsp;based&nbsp;on&nbsp;the&nbsp;string&nbsp;query<br>
+:param&nbsp;query:&nbsp;String&nbsp;query&nbsp;(e.g.,&nbsp;Apple)<br>
+:return:&nbsp;Data&nbsp;frame&nbsp;with&nbsp;hits</tt></dd></dl>
+
+<dl><dt><a name="LQuant-search_universe"><strong>search_universe</strong></a>(self, query)</dt><dd><tt>Searches&nbsp;universe&nbsp;based&nbsp;on&nbsp;the&nbsp;string&nbsp;query<br>
+:param&nbsp;query:&nbsp;String&nbsp;query&nbsp;(e.g.,&nbsp;Korea)<br>
+:return:&nbsp;Data&nbsp;frame&nbsp;with&nbsp;hits</tt></dd></dl>
+
+<dl><dt><a name="LQuant-valuation_spread"><strong>valuation_spread</strong></a>(self, data, req)</dt></dl>
+
+<hr>
+Static methods defined here:<br>
+<dl><dt><a name="LQuant-new_backtest_request"><strong>new_backtest_request</strong></a>()</dt><dd><tt>Creates&nbsp;a&nbsp;new&nbsp;backtest&nbsp;request<br>
+:return:&nbsp;Handle&nbsp;to&nbsp;backtest&nbsp;request</tt></dd></dl>
+
+<dl><dt><a name="LQuant-new_valspread_request"><strong>new_valspread_request</strong></a>()</dt><dd><tt>Creates&nbsp;a&nbsp;new&nbsp;Valuation&nbsp;Spread&nbsp;Request<br>
+:return:&nbsp;Handle&nbsp;to&nbsp;valuation&nbsp;spread&nbsp;request</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="MultiFactorBacktest">class <strong>MultiFactorBacktest</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="MultiFactorBacktest-__init__"><strong>__init__</strong></a>(self, env, backtest_results, factors)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="MultiFactorBacktest-factor_name"><strong>factor_name</strong></a>(self, i)</dt></dl>
+
+<dl><dt><a name="MultiFactorBacktest-generate_excel"><strong>generate_excel</strong></a>(self, univName, baskets)</dt></dl>
+
+<dl><dt><a name="MultiFactorBacktest-generate_pdf"><strong>generate_pdf</strong></a>(self, filename, title, i)</dt></dl>
+
+<dl><dt><a name="MultiFactorBacktest-get"><strong>get</strong></a>(self, i)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="TempVar">class <strong>TempVar</strong></a>(<a href="builtins.html#object">builtins.object</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="TempVar-__del__"><strong>__del__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="TempVar-__init__"><strong>__init__</strong></a>(self, env)</dt><dd><tt>Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</tt></dd></dl>
+
+<dl><dt><a name="TempVar-name"><strong>name</strong></a>(self)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>

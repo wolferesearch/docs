@@ -1,0 +1,742 @@
+swagger: '2.0'
+info:
+  description: |
+    QES Quant Service API provides easy access to Risk/Optimization API
+  version: "0.0.2"
+  title: QES Quant Service API
+  termsOfService: http://wolferesearch.com
+  contact:
+    email: luo.qes@wolferesearch.com
+  license:
+    name: Restricted
+    url: http://wolferesearch.com
+tags:
+- name: risk
+  description: Custom Build and explore custom Global Equity Risk models using Async API
+  externalDocs:
+    description: Find out more
+    url: http://wolferesearch.com
+- name: optimization
+  description: Optimize portfolios
+- name: optimization
+  description: Operations about user
+  externalDocs:
+    description: Find out more about our optimization
+    url: http://wolferesearch.com
+
+securityDefinitions:
+  basicAuth:
+    type: basic
+
+# Basic auth to the whole API:
+security:
+  - basicAuth: []
+
+schemes:
+  - "https"
+
+paths:
+  /job:
+    get:
+      tags:
+      - job
+      operationId: getJobList
+      summary: Gets the list of applicable jobs
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/JobModel"
+
+  /universe:
+    get:
+      tags:
+      - catalog
+      summary: Gets the list of applicable universes
+      operationId: getUniverseList
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/UniverseModel"
+
+  /factor:
+    get:
+      tags:
+      - catalog
+      summary: Gets the list of applicable factors
+      operationId: getFactorList
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/FactorModel"
+
+  /meta:
+    get:
+      tags:
+      - catalog
+      summary: Gets the list of applicable meta fields
+      operationId: getMetaList
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/FactorModel"
+
+  /portfolio:
+    get:
+      tags:
+      - catalog
+      summary: Gets the list of applicable portfolios
+      operationId: getPortfolioList
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/PortfolioModel"
+    post:
+      tags:
+      - catalog
+      summary: Creates / Updates Portoflio
+      operationId: createPortfolio
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Risk Model Template
+        required: true
+        schema:
+          $ref: '#/definitions/RiskModelTemplate'
+      responses:
+        405:
+          description: Invalid input
+
+  /template:
+    get:
+      tags:
+      - catalog
+      summary: Gets the list of appicable templates
+      operationId: getTemplateList
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/TemplateModel"
+
+  /risk-model:
+    post:
+      tags:
+      - risk-model
+      summary: Creates New Risk Model
+      operationId: createRiskModel
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Risk Model Parameters
+        required: true
+        schema:
+          $ref: '#/definitions/RiskModelRequest'
+      responses:
+        403:
+          description: Not Authorized
+        405:
+          description: Invalid input
+        200:
+          description: successful operation return uuid
+          schema:
+            type: string
+    get:
+      tags:
+      - risk-model
+      summary: Gets the list of risk models historical and current
+      operationId: getRiskModelList
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/RiskModel"
+
+  /risk-model/{uuid}:
+    get:
+      tags:
+      - risk-model
+      summary: Gets risk model dates list
+      description: Returns dates for which risk model is available
+      operationId: getRiskModelDateList
+      produces:
+      - application/json
+      parameters:
+      - name: uuid
+        in: path
+        description: ID of the risk model
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: array
+            items:
+              type: string
+        400:
+          description: Invalid status value
+
+  /risk-model/{uuid}/{date}:
+   get:
+      tags:
+      - risk-model
+      summary: Gets risk model files listing
+      description: Returns list of files available for risk model for a date
+      operationId: getRiskModelDateFiles
+      produces:
+      - application/json
+      parameters:
+      - name: uuid
+        in: path
+        description: ID of the risk model
+        required: true
+        type: string
+      - name: date
+        in: path
+        description: date of the risk model (yyyymmdd)
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: array
+            items:
+              type: string
+        400:
+          description: Invalid status value
+
+  /risk-model/{uuid}/{date}/{file}:
+    get:
+      tags:
+      - risk-model
+      summary: Download a risk model file
+      description: Download risk model CSV File
+      operationId: getRiskModelFile
+      produces:
+      - application/json
+      parameters:
+      - name: uuid
+        in: path
+        description: ID of the risk model
+        required: true
+        type: string
+      - name: date
+        in: path
+        description: date of the risk model (yyyymmdd)
+        required: true
+        type: string
+      - name: file
+        in: path
+        description: Risk model file
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+        400:
+          description: Invalid status value
+
+  /optimization:
+    post:
+      tags:
+      - optimization
+      summary: New Optimization Request
+      description: Runs a new Optimization Request
+      operationId: newOptimizationRequest
+      produces:
+      - application/json
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Optimization Request
+        required: true
+        schema:
+          $ref: '#/definitions/OptimizationRequest'
+      responses:
+        403:
+          description: Not Authorized
+        405:
+          description: Invalid input
+        200:
+          description: successful operation return uuid
+          schema:
+            type: string
+    get:
+      tags:
+      - optimization
+      summary: Gets the list of optimization tasks historical and current
+      operationId: getOptimizationList
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/OptimizationTemplate"
+
+  /optimization/{uuid}:
+    get:
+      tags:
+      - optimization
+      summary: Gets optimization file list
+      description: Returns file list for which optimization is run and summary
+      operationId: getOptimizationFileList
+      produces:
+      - application/json
+      parameters:
+      - name: uuid
+        in: path
+        description: ID of the optimization
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: array
+            items:
+              type: string
+        400:
+          description: Invalid status value
+
+  /optimization/{uuid}/{file}:
+   get:
+      tags:
+      - optimization
+      summary: Gets optimization result for the date
+      description: Returns optimized portfolio and other statistics
+      operationId: getOptimization
+      produces:
+      - application/json
+      parameters:
+      - name: uuid
+        in: path
+        description: ID of the optimization
+        required: true
+        type: string
+      - name: file
+        in: path
+        description: Optimization result file
+        required: true
+        type: string
+      responses:
+        200:
+          description: successful operation
+          schema:
+            type: array
+            items:
+              type: string
+        400:
+          description: Invalid status value
+
+  /template/risk-model:
+    post:
+      tags:
+      - catalog
+      summary: Creates / Updates Risk Model Template based on ...
+      operationId: createRiskModelTemplate
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Risk Model Template
+        required: true
+        schema:
+          $ref: '#/definitions/TemplateModel'
+      responses:
+        405:
+          description: Invalid input
+
+  /template/optimization:
+    post:
+      tags:
+      - catalog
+      summary: Creates new optimization template
+      operationId: createOptimizationTemplate
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Optimization Template
+        required: true
+        schema:
+          $ref: '#/definitions/TemplateModel'
+      responses:
+        405:
+          description: Invalid input
+
+definitions:
+  OptimizationRequest:
+    type: object
+    properties:
+      portfolio:
+        type: string
+        description: Mnemonic of the portfolio to be optimized
+      template:
+        type: string
+        description: One of the previously defined templates for risk
+      startDate:
+        type: string
+        description: Start date (yyyy-mm-dd)
+      endDate:
+        type: string
+        description: End date (yyyy-mm-dd)
+      freq:
+        type: string
+        description: Frequency of risk model generation
+        enum:
+        - 1me
+        - 1m
+        - 1d
+      benchmark:
+        type: string
+        description: Benchmark for Tracking error optimization problem
+                      - Any of the standard universes and portfolios can be used
+                      - as benchmark. The caller should provide the benchmark
+                      - mnemonic, e.g., QES_EUROPE, QES_WORLD, SP500. System uses
+                      - the Float weighting as benchmark.
+        enum:
+        - QES_EUROPE
+        - QES_WORLD
+        - SP500
+      transaction_cost:
+        type: number
+        description: Transaction cost  to consider in the optimization.
+                     - This is relevant for MVO optimization where transaction
+                     - cost is taken out from objective function. The transaction
+                     - cost is a quadratic function added based on value selected
+                     - For when the transaction_cost = 1, about 1 median spread
+                     - is estimated as the cost when 7% of ADV is participated,
+                     - for when transaction_cost = 5, 1 median spread cost is
+                     - estimated for when the participation is 3%. The per share
+                     - cost is linear and in objective function, the cost becomes
+                     - quadratic
+        maximum: 5
+        mininum: 0
+        default: 0
+
+
+  RiskModelRequest:
+    type: object
+    properties:
+      universe:
+        type: string
+        description: Mnemonic for Risk Estimation universe
+      template:
+        type: string
+        description: One of the previously defined templates for risk
+      startDate:
+        type: string
+        description: Start date (yyyy-mm-dd)
+      endDate:
+        type: string
+        description: End date (yyyy-mm-dd)
+      freq:
+        type: string
+        description: Frequency of risk model generation
+        enum:
+        - 1me
+        - 1m
+        - 1d
+        - 1w
+
+  PortfolioModel:
+    type: object
+    properties:
+      ID:
+        type: string
+        description: Portfolio Name
+      UPLOADEDBY:
+        type: string
+        description: Associated User
+      UPLOADEDTIME:
+        type: string
+        description: Date on which portoflio file was uploaded
+
+  RiskModel:
+    type: object
+    properties:
+      uuid:
+        type: string
+        description: Unique id of the risk model
+      template:
+        type: string
+        description: Template used for risk model
+      dateCreated:
+        type: string
+        description: Date on which riks model was created
+
+  UniverseModel:
+    type: object
+    properties:
+      ID:
+        type: string
+        description: Unique Indentifier
+      NAME:
+        type: string
+        description: Unique Name
+      SECTOR:
+        type: string
+        description: Applicable Sector
+      COUNTRY:
+        type: string
+        description: Applicable Country or Geographic Region
+      DESCRIPTION:
+        type: string
+        description: Descriptive Text
+
+  FactorModel:
+    type: object
+    properties:
+      ID:
+        type: string
+        description: Unique Indentifier
+      CATEGORY:
+        type: string
+        description: Unique Name
+      SUBCATEGORY:
+        type: string
+        description: Applicable Sector
+      DESCRIPTION:
+        type: string
+        description: Descriptive Text
+
+  MetaModel:
+    type: object
+    properties:
+      ID:
+        type: string
+        description: Unique Indentifier
+      NAME:
+        type: string
+        description: Unique Name
+      DESCRIPTION:
+        type: string
+        description: Descriptive Text
+
+  TemplateModel:
+    type: object
+    properties:
+      TYPE:
+        type: string
+        description: Applicable Process - Risk-Model, Optimization
+      OWNER:
+        type: string
+        description: Template Creator
+      NAME:
+        type: string
+        description: Unique Name
+      DESCRIPTION:
+        type: string
+        description: Descriptive Text
+      MODIFIED_DATE:
+        type: string
+        description: Timestamp of last modified
+      CONTENT:
+        type: string
+        description: Template Content
+
+  JobModel:
+    type: object
+    properties:
+      TYPEID:
+        type: string
+        description: Unique id of the risk model
+      USER_:
+        type: string
+        description: Template used for risk model
+      UUID:
+        type: string
+        description: Date on which riks model was created
+      STARTTIME:
+        type: string
+        description: Date on which riks model was created
+      STATUS:
+        type: string
+        description: Date on which riks model was created
+      ENDTIME:
+        type: string
+        description: Date on which riks model was created
+      MESSAGE:
+        type: string
+        description: Date on which riks model was created
+
+  RiskModelTemplate:
+    type: object
+    properties:
+      factors:
+        type: array
+        description: List of factor mnemonics inputs
+        items:
+          $ref : '#/definitions/FactorInput'
+      meta:
+        type: array
+        description: List of meta data mnemonics inputs
+        items:
+          $ref : '#/definitions/MetaInput'
+      options:
+        $ref: '#/definitions/RiskModelOption'
+      covArgs:
+        $ref: '#/definitions/CovarianceMatrixOption'
+
+  FactorInput:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Human readable name for the factor, should be unique across the list
+      mnemonic:
+        type: string
+        description: Factor Mnemonic
+
+  MetaInput:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Human readable name for the factor, should be unique across the list
+      mnemonic:
+        type: string
+        description: Meta Mnemonic (SEDOL, TICKER, CURRENCY, QES_GSECTOR, QES_GGROUP, QES_COUNTRY)
+
+  RiskModelOption:
+    type: object
+    properties:
+      spRisk:
+        $ref: '#/definitions/RiskModelSpRiskOption'
+
+  RiskModelSpRiskOption:
+    type: object
+    description: Option to control the specific risk of the risk model
+    properties:
+      shrinkage:
+        type: number
+        description: Shrinkage to control the specific risk
+        minimum: 0
+        maximum: 1
+        default: 0
+      fn:
+        type: string
+        title: Function for shrinkage
+        default: mean
+        enum:
+        - mean
+        - median
+
+  CovarianceMatrixOption:
+    type: object
+    properties:
+      interval:
+        type: integer
+        title: Sampling Frequency to build the covariance matrix
+        minimum: 1
+        maximum: 1000
+      cov.period:
+        type: integer
+        title: Period for computing covariance between the stocks
+        minimum: 32
+        maximum: 5000
+      var.period:
+        type: integer
+        title: Period for computing variance (diagonal) for stocks
+        minimum: 32
+        maximum: 5000
+      shirinkageIntensity:
+        type: number
+        title: Regularization (Shrinkage) of the correlation
+        minimum: 0
+        maximum: 1
+
+  OptimizationTemplate:
+    type: object
+    properties:
+      target_risk:
+        type: number
+        example: 0.4
+        description: Annualized Risk Target for optimization
+        minimum: 0.001
+        maximum: 10
+      bound:
+        type: array
+        example:
+        - -0.05
+        - 0.05
+        description: Minimum and Maximum weight bound
+        items:
+          type: number
+          minimum: -100
+          maximum: 100
+      max_ADV_participation:
+        type: number
+        example: 0.05
+        description: ADV Participation Ceiling (5% == 0.05)
+        minimum: 0.001
+        maximum: 1
+      max_turonver:
+        type: number
+        example: 1.5
+        description: Maximum turnover allowed
+        minimum: 0.001
+        maximum: 100
+      gross_weight:
+        type: number
+        example: 2.0
+        description: Total notional weight of the optimized basket
+        minimum: 0.1
+        maximum: 100
+      net_weight:
+        type: number
+        example: 0.0
+        description: Net weight of the optimized basket. For Long/Short neutral the Net weight should be 0
+        minimum: -100
+        maximum: 100
+      objective:
+        type: string
+        enum:
+        - maxAlpha
+        - minRisk
+        - MVO
+      lambda:
+        type: number
+        description: Risk aversion parameter, only used when objective is set as MVO
+
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+# Added by API Auto Mocking Plugin
+host: feed.luoquant.com
+#basePath:
