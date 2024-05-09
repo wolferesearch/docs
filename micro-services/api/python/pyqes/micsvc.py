@@ -1400,6 +1400,26 @@ class Optimizer(Base):
         self.req['benchmark'] = benchmark
         return self
 
+    def set_relative_bounds(self, lb:float, ub: float):
+        """Sets relative weight bound for securities compare to benchmark
+
+        Parameters
+        ----------
+        lb: float
+            Lower Bound. Miniumum relative weight allowed compare to benchmark 
+        ub: float
+            Upper Bound. Maximum relatvie weight allowed compare to benchmark
+
+        Returns
+        -------
+        Optimizer Class Instances
+
+        """
+
+        self.req['relative_weight_min'] = lb
+        self.req['relative_weight_max'] = ub
+        return self
+
     def set_bounds(self,lb:float, ub: float):
         """Sets weight bound for securities
 
