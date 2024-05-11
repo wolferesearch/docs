@@ -916,6 +916,9 @@ class OptimizerResult:
     def get_old_weights_2(self):
         return self.__get__('old_weights_2.csv')
 
+    def get_opt_status(self):
+        return self.output.get_single_data('opt_status.csv')
+
     def get_weights(self):
         """Gets the Weight of the optimization portfolio. This will return a matrix with
         security ids in rows and dates in columns
