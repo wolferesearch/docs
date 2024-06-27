@@ -2479,6 +2479,8 @@ class HedgeBuilder(Base):
         return self
 
     def add_factor_constraint(self, name, lb, ub, type_='Factor', constraint_type='Numerical', target='AfterHedge', include_target_factors=False):
+        if 'factor_constraints' not in self.req.keys():
+            self.req['factor_constraints'] = []
         self.req['factor_constraints'].append({'name': name, 'lb': lb, 'ub': ub, 'type': type_, 'constraint_type': constraint_type, 'target': target, 'include_target_factors': include_target_factors})
         return self
     
