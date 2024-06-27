@@ -21,6 +21,8 @@ TYPE_ATTRIBUTION = 3
 TYPE_SIMULATOR = 8
 TYPE_HEDGE = 9
 
+ENCRYPTED='TRUE' == os.environ.get('LQUANT_MICSVC_ENCRYPTED')
+
 class Connection:
     """
     Connenection Class gets initialized using username and password simplify the process to call functional APIs.
@@ -67,7 +69,20 @@ class Connection:
         response = self.session.post(self.URL + '/' + svc,
                                 data = body, headers = self.headers)
         return response.text
-
+    
+    def get_raw(self, svc):
+        '''
+        HTTP GET request 
+        :param svc: service function {optimization|riskmodel}
+        :return: requests API uid
+        '''
+        response = self.session.get(self.URL + '/' + svc)
+        if response.ok:
+            return response.content
+        else:
+            print("Error when querying ==> [{}]".format(response.text))
+            return None
+        
     def get(self, svc):
         '''
         HTTP GET the request
@@ -308,14 +323,44 @@ class JobOutput:
     def _get_raw_(self, key):
         return self.conn.get('job/data/' + self.uuid + '/' + key.replace('/','::'))
 
+    def _get_raw_bin_(self, key):
+        return self.conn.get_raw('job/rawdata/' + self.uuid + '/' + key.replace('/','::'))
+    
+    def _decrypt_(self,content):
+        import tempfile
+        import subprocess
+        import os
+
+        file_descriptor, file_path = tempfile.mkstemp(suffix='.pgp')
+        with open(file_path, "wb") as file:
+            file.write(content)
+        
+        file_descriptor,outfile = tempfile.mkstemp(suffix='.csv')
+
+        if os.path.exists(outfile):
+            os.remove(outfile) 
+        
+        subprocess.run(["gpg","--output",outfile,"--decrypt","--recipient",os.environ['LQUANT_MICSVC_SENDER'],file_path])
+        
+        if not os.path.exists(outfile):
+            raise Exception("Failed to decrypt file " + file_path)
+
+        return outfile
+
     def _fetch(self,key):
         file = os.path.basename(key) 
 
         structure = file[:1]
         data_type = file[1:2]
 
-        content = self._get_raw_(key)
-        data = io.StringIO(content)
+        if key.endswith('.gpg'): # Encrypted Data
+            content = self._get_raw_bin_(key)
+            data = self._decrypt_(content)
+
+        else:
+            content = self._get_raw_(key)
+            data = io.StringIO(content)
+
         if structure == 'M': # Matrix
             return pd.read_csv(data, index_col=0)
         elif structure == 'V':
@@ -332,9 +377,15 @@ class JobOutput:
     def get_keys(self):
         return [ self.__file__(x) for x in self.files.Key]
 
+    def _base_key(self, key):
+        if key.endswith('.gpg'):
+            return key[0:len(key)-4]
+        return key
+
     def get_single_data(self, key):
+        key = self._base_key(key)
         keys = self.get_keys()
-        v = self.files.iloc[[k == key for k in keys]]
+        v = self.files.iloc[[(self._base_key(k) == key) for k in keys]]
         fullkey = v['Key'].iloc[0]
         return self._fetch(fullkey)
 
@@ -878,11 +929,14 @@ class Base:
         if not overwrite and user_data.exists(name):
             raise Exception("Data {} and overwrite is not set. Will not overwrite.".format(name))
 
-        user_data.upload_data(data,name)
+        name = user_data.upload_data(data,name)
         self.req['user_data'] = {
             'format' : 'csv',
             'name': name
         }
+        if ENCRYPTED:
+            self.req['user_data']['encrypted'] = 'TRUE'
+            self.req['user_data']['recipient'] = os.environ['LQUANT_MICSVC_RECIPIENT']
         return self
 
     def submit(self):
@@ -2467,6 +2521,19 @@ class UserData:
     def __init__(self, connection):
         self.connection = connection
 
+    def encrypt_data(self, file_path):
+        if not ENCRYPTED:
+            return file_path
+        import tempfile
+        import subprocess
+        file_descriptor, outfile = tempfile.mkstemp(suffix='.gpg')
+        if os.path.exists(outfile):
+            os.remove(outfile) 
+        subprocess.run(["gpg","--output",outfile,"--encrypt","--recipient",os.environ['LQUANT_MICSVC_RECIPIENT'],file_path])
+        if not os.path.exists(outfile):
+            raise Exception("Failed to encrypt data")
+        return outfile
+
     def upload_data(self, file_path_or_data, name):
         '''
         Uploads data to user environment
@@ -2474,20 +2541,24 @@ class UserData:
         :param data: Pandas Data frame
         :param name: Name to associate the data with
         '''
+        if ENCRYPTED and not name.endswith('.gpg'):
+            name = name + ".gpg"
         if type(file_path_or_data) == str:
             file_path = file_path_or_data
-            res = self.connection.upload_file(file_loc = file_path, name = name)
+            res = self.connection.upload_file(file_loc = self.encrypt_data(file_path), name = name)
         else:
             file_descriptor, file_path = tempfile.mkstemp(suffix='.csv')
             file_path_or_data.to_csv(path_or_buf=file_path, index=False)
-            res = self.connection.upload_file(file_loc = file_path, name = name)
+            res = self.connection.upload_file(file_loc = self.encrypt_data(file_path), name = name)
             try: # Try to remove the temporary file
                 os.unlink(file_path)
             except:
                 print("Failed to remote temporary file")
             
-            
-        return res.text
+        if res.status_code != 200:
+            raise Exception("Failed to upload data ==> " + res.text)
+
+        return name
 
     def list_data(self):
         v = self.connection.get('port')
