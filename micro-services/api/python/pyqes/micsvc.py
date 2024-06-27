@@ -876,6 +876,7 @@ class Base:
         self.esvc = None
         self.data = None
         endPoint = self.endPoint   # service argument
+
         # if type(req) == dict:
         #     req = str(req).replace('\'', '"')
         # call the API and get the respective uuid
@@ -940,6 +941,8 @@ class Base:
         return self
 
     def submit(self):
+        if ENCRYPTED:
+            self.req['recipient'] = os.environ['LQUANT_MICSVC_SENDER']
         self.submit_new_request(self.req)
         return self
     
