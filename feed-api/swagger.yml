@@ -1,0 +1,97 @@
+---
+openapi: 3.0.1
+info:
+  title: QES Security Data API
+  description: API for accessing time series and cross-sectional security data
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /qes/product:
+    get:
+      summary: List all data packages
+      responses:
+        '200':
+          description: A list of data packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /qes/product/{productid}:
+    get:
+      summary: Get details of a specific data package
+      parameters:
+        - name: productid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                type: object
+  /qes/data/ts/{securityid}/{item}/{startdate}/{enddate}:
+    get:
+      summary: Get time series data for a security
+      parameters:
+        - name: securityid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: item
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: startdate
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: enddate
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Time series data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /qes/data/cs/{productid}/{dated}:
+    get:
+      summary: Get cross-sectional data for a product and date
+      parameters:
+        - name: productid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: dated
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Cross-sectional data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
