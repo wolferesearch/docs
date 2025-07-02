@@ -5,7 +5,7 @@ info:
   description: API for accessing time series and cross-sectional security data
   version: 1.0.0
 servers:
-  - url: http://localhost:8080
+  - url: http://hosturl
 paths:
   /qes/product:
     get:

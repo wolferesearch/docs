@@ -12,7 +12,7 @@ This API provides endpoints to access time series and cross-sectional security d
 ## Base URL
 
 ```
-http://localhost:8080/qes
+http://{url}/qes
 ```
 
 ---
@@ -28,7 +28,16 @@ Returns a list of all available data packages.
 **Response Example:**
 
 ```json
-["macro_factor", "alpha_model", "industry_scores"]
+{
+    "TIARA 1.0": {
+        "id": 195,
+        "description": "Stock selection model based on trademark filings as well as the trademark lifecycle process which includes application, publication, registration, and even termination for over ~4,500 stocks across US, Japan, EU, and UK."
+    },
+    "TRAP": {
+        "id": 196,
+        "description": "TRAP is an advanced volatility-predicting model that utilizes elastic net boosting and incorporates all FTD factors, along with traditional volatility and short-selling measures"
+    }
+}
 ```
 
 ---
@@ -41,7 +50,7 @@ Retrieves metadata for the given product.
 
 **Path Parameters:**
 
-* `productid`: ID of the data product (e.g., `macro_factor`)
+* `productid`: ID of the data product (e.g., `196`)
 
 **Response Example:**
 
@@ -63,8 +72,8 @@ Fetches time series data for a specified security ID and item, between `startdat
 
 **Path Parameters:**
 
-* `securityid`: ID of the security (e.g., `AAPL`)
-* `item`: Data item to retrieve (e.g., `price`, `return`)
+* `securityid`: ID of the security (e.g., `AAPL US`)
+* `item`: Data item to retrieve (e.g., `TRAP`, `FTD_FLOAT_AV1M`)
 * `startdate`: Start date (YYYY-MM-DD)
 * `enddate`: End date (YYYY-MM-DD)
 
@@ -87,15 +96,15 @@ Retrieves cross-sectional data for a given product on a specific date.
 
 **Path Parameters:**
 
-* `productid`: ID of the product (e.g., `alpha_model`)
+* `productid`: ID of the product (e.g., `TRAP`)
 * `dated`: The date for the cross-section (YYYY-MM-DD)
 
 **Response Example:**
 
 ```json
 [
-  {"securityId": "AAPL", "value": 0.67},
-  {"securityId": "MSFT", "value": 0.72}
+  {"securityId": "AAPL US", "value": 0.67},
+  {"securityId": "MSFT US", "value": 0.72}
 ]
 ```
 
