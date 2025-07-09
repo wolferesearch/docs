@@ -66,7 +66,7 @@ Retrieves metadata for the given product.
 
 ### 3. Get Time Series Data
 
-**GET** `/data/ts/{securityid}/{item}/{startdate}/{enddate}`
+**GET** `/product/{productiod}/data/ts/{idtype}/{securityid}/{item}/{startdate}/{enddate}`
 
 Fetches time series data for a specified security ID and item, between `startdate` and `enddate`.
 
@@ -92,7 +92,7 @@ Fetches time series data for a specified security ID and item, between `startdat
 
 ### 4. Get Cross-Sectional Data
 
-**GET** `/data/cs/{productid}/{dated}`
+**GET** `/product/{productid}/data/cs/{dated}`
 
 Retrieves cross-sectional data for a given product on a specific date.
 

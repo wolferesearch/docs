@@ -35,10 +35,15 @@ paths:
             application/json:
               schema:
                 type: object
-  /qes/data/ts/{idtype}/{securityid}/{productid}/{item}/{startdate}/{enddate}:
+  /qes/product/{productid}/data/ts/{idtype}/{securityid}/{item}/{startdate}/{enddate}:
     get:
       summary: Get time series data for a security
       parameters:
+        - name: productid
+          in: path
+          required: true
+          schema:
+            type: integer          
         - name: idtype
           in: path
           required: true
@@ -49,11 +54,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: productid
-          in: path
-          required: true
-          schema:
-            type: integer            
         - name: item
           in: path
           required: true
@@ -80,7 +80,7 @@ paths:
                 type: array
                 items:
                   type: object
-  /qes/data/cs/{productid}/{dated}:
+  /qes/product/{productid}/data/cs/{dated}:
     get:
       summary: Get cross-sectional data for a product and date
       parameters:

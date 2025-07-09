@@ -42,7 +42,7 @@ class QESClient(APIClient):
         - enddate: End date for the data (format: YYYY-MM-DD)
         - Returns: JSON object with time series data for the security
         """
-        path = f"/qes/data/ts/{idtype}/{securityid}/{productid}/{item}/{startdate}/{enddate}"
+        path = f"/qes/product/{productid}/data/ts/{idtype}/{securityid}/{item}/{startdate}/{enddate}"
         return self.request("GET", path)
 
     def get_cross_sectional_data(self, productid: int, dated: str):
@@ -53,7 +53,7 @@ class QESClient(APIClient):
             - dated: The date for which to retrieve cross-sectional data (format: YYYY-MM-DD)
             - Returns: JSON object with cross-sectional data    
         """
-        path = f"/qes/data/cs/{productid}/{dated}"
+        path = f"/qes/product/{productid}/data/cs/{dated}"
         return self.request("GET", path)
     
     def get_security_info(self, qesid: str):
