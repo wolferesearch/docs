@@ -35,15 +35,25 @@ paths:
             application/json:
               schema:
                 type: object
-  /qes/data/ts/{securityid}/{item}/{startdate}/{enddate}:
+  /qes/data/ts/{idtype}/{securityid}/{productid}/{item}/{startdate}/{enddate}:
     get:
       summary: Get time series data for a security
       parameters:
+        - name: idtype
+          in: path
+          required: true
+          schema:
+            type: string
         - name: securityid
           in: path
           required: true
           schema:
             type: string
+        - name: productid
+          in: path
+          required: true
+          schema:
+            type: integer            
         - name: item
           in: path
           required: true
@@ -94,4 +104,18 @@ paths:
                 type: array
                 items:
                   type: object
-
+  /qes/security/{qesid}:
+    get:
+      summary: Get security information by QES ID
+      parameters:
+        - name: qesid
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Security info
+          content:
+            application/json:
+              schema:
+                type: object

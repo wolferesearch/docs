@@ -1,4 +1,4 @@
-# QES Security Data API Documentation
+# QES Product Data API 
 
 ## Overview
 
@@ -72,10 +72,12 @@ Fetches time series data for a specified security ID and item, between `startdat
 
 **Path Parameters:**
 
-* `securityid`: ID of the security (e.g., `AAPL US`)
-* `item`: Data item to retrieve (e.g., `TRAP`, `FTD_FLOAT_AV1M`)
-* `startdate`: Start date (YYYY-MM-DD)
-* `enddate`: End date (YYYY-MM-DD)
+- `idtype`: Type of Id e.g., QESID,TIC,BBTICKER,SEDOL, CUSIP String (required)
+- `securityid`: Identifier for the security String (required)
+- `productid`: Product Id Integer (required)
+- `item`: Mnemonic of the factor from the product String (required)
+- `startdate`: Start Date String (YYYY-MM-DD)
+- `enddate`: End Date String (YYYY-MM-DD)
 
 **Response Example:**
 
@@ -107,6 +109,12 @@ Retrieves cross-sectional data for a given product on a specific date.
   {"securityId": "MSFT US", "value": 0.72}
 ]
 ```
+
+### 5. Get Security Information
+
+Gets general information about a security using qesid
+
+**GET** `/qes/security/{qesid}`
 
 ---
 
