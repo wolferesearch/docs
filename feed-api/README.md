@@ -66,13 +66,12 @@ Retrieves metadata for the given product.
 
 ### 3. Get Time Series Data
 
-**GET** `/product/{productiod}/data/ts/{idtype}/{securityid}/{item}/{startdate}/{enddate}`
+**GET** `/product/{productiod}/data/ts/{securityid}/{item}/{startdate}/{enddate}`
 
 Fetches time series data for a specified security ID and item, between `startdate` and `enddate`.
 
 **Path Parameters:**
 
-- `idtype`: Type of Id e.g., QESID,TIC,BBTICKER,SEDOL, CUSIP String (required)
 - `securityid`: Identifier for the security String (required)
 - `productid`: Product Id Integer (required)
 - `item`: Mnemonic of the factor from the product String (required)
@@ -110,13 +109,61 @@ Retrieves cross-sectional data for a given product on a specific date.
 ]
 ```
 
+#### 4.1 Get Cross-Sectional Data for list of Securities
+
+**POST** `/product/{productid}/data/cs/{dated}`
+
+Retrieves cross-sectional data for a given product on a specific date.
+
+**Path Parameters:**
+
+* `productid`: ID of the product (e.g., `TRAP`)
+* `dated`: The date for the cross-section (YYYY-MM-DD)
+
+**Payload Example:**
+```json
+{
+    "ids1": ["4M5L5KXMK4","4MX5NPYWG9"]
+}
+```
+
+**Response Example:**
+
+```json
+[
+  {"securityId": "AAPL US", "value": 0.67},
+  {"securityId": "MSFT US", "value": 0.72}
+]
+```
+
+
 ### 5. Get Security Information
 
 Gets general information about a security using qesid
 
-**GET** `/qes/security/{qesid}`
+**GET** `/security/{qesid}`
 
 ---
+
+
+### 6. Map Ids to Security Ids
+**POST** `/security/map/{idtype}`
+
+Retrieves cross-sectional data for a given product on a specific date.
+
+**Path Parameters:**
+
+- `idtype`: Type of Id e.g., QESID,TIC,BBTICKER,SEDOL, CUSIP String (required)
+
+**Payload Example:**
+```json
+{
+    "ids1": ["AAPL","MSFT"],
+    "idType": "TIC"
+}
+```
+
+
 
 ## Status Codes
 

@@ -80,16 +80,24 @@ class QESClient(APIClient):
         path = f"/qes/product/{productid}"
         return self.request("GET", path)
 
+    def map_ids(self, idtype: str, ids: list[str]):
+        """
+         Maps Ids to Security Id
+        - idtype: Type of ID (e.g., 'QESID', 'CUSIP', 'SEDOL','TIC')
+        - ids: List of ids (e.g., 'AAPL')
+        """
+        path = f"/qes/security/map/{idtype}"
+        return self.request("POST", path,json={"ids1": ids})
+                          
     def get_security_data(self, productid: int,
                           item: str,
-                          idtype: str, 
                           securityid: str,  
                           startdate: str, enddate: str):
         """
-        GET /qes/product/{productid}/data/ts/{idtype}/{securityid}/{item}/{startdate}/{enddate}
+        GET /qes/product/{productid}/data/ts/{securityid}/{item}/{startdate}/{enddate}
         Get time series data for a security
 
-        - idtype: Type of ID (e.g., 'QESID', 'CUSIP', 'SEDOL','TIC')
+        
         - securityid: The ID of the security (e.g., 'AAPL US')
         - productid: The ID of the data package
         - item: The specific data item to retrieve (e.g., 'close', 'volume')
@@ -97,9 +105,21 @@ class QESClient(APIClient):
         - enddate: End date for the data (format: YYYY-MM-DD)
         - Returns: JSON object with time series data for the security
         """
-        path = f"/qes/product/{productid}/data/ts/{idtype}/{securityid}/{item}/{startdate}/{enddate}"
+        path = f"/qes/product/{productid}/data/ts/{securityid}/{item}/{startdate}/{enddate}"
         return QesData(self.request("GET", path)).as_time_series()
 
+
+    def get_cross_sectional_data_for_ids(self, productid: int, dated: str, ids: list[str]):
+        """
+        GET /qes/data/cs/{productid}/{dated}
+        Get cross-sectional data for a data package on a specific date.
+            - productid: The ID of the data package
+            - dated: The date for which to retrieve cross-sectional data (format: YYYY-MM-DD)
+            - ids: List of Security Ids
+            - Returns: JSON object with cross-sectional data    
+        """
+        path = f"/qes/product/{productid}/data/cs/{dated}"
+        return QesData(self.request("POST", path,json={"ids1": ids})).as_data_frame()
         
     def get_cross_sectional_data(self, productid: int, dated: str):
         """
@@ -110,7 +130,7 @@ class QESClient(APIClient):
             - Returns: JSON object with cross-sectional data    
         """
         path = f"/qes/product/{productid}/data/cs/{dated}"
-        return QesData(self.request("GET", path))
+        return QesData(self.request("GET", path)).as_data_frame()
     
     def get_security_info(self, qesid: str):
         """
