@@ -1,3 +1,19 @@
+##### *Note*
+This repository is intentionally made public to share sample code, design patterns, and documentation that may be useful to the broader developer community.
+None of the content here contains proprietary data, confidential information, or production-level code from my work. It is provided solely for educational, demonstration, and reference purposes.
+
+Please note:
+
+The examples and materials are simplified for clarity and are not meant to represent full production systems.
+
+Any opinions, implementations, or architectural choices are my own and do not represent any employer or organization.
+
+Contributions, suggestions, and discussions are welcome.
+
+*Thank you for visiting — I hope you find the content helpful!*
+
+
+
 # LQuant - Equity Financial Data Library
 
 
