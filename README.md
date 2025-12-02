@@ -1,6 +1,6 @@
 ##### *Note*
 This repository is intentionally made public to share sample code, design patterns, and documentation that may be useful to the broader developer community.
-None of the content here contains proprietary data, confidential information, or production-level code from my work. It is provided solely for educational, demonstration, and reference purposes.
+None of the content here contains proprietary data, confidential information, or production-level code. It is provided solely for educational, demonstration, and reference purposes.
 
 Please note:
 
