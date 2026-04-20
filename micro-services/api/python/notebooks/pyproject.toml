@@ -1,0 +1,17 @@
+[project]
+name = "pyqes-notebooks"
+version = "0.0.1"
+description = "Runnable notebooks for the pyqes optimization and risk-model APIs"
+requires-python = ">=3.10"
+dependencies = [
+    "pyqes",
+    "python-dotenv",
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "jupyterlab",
+    "ipykernel",
+]
+
+[tool.uv.sources]
+pyqes = { path = "../", editable = true }
