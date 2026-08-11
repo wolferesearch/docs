@@ -1,0 +1,14 @@
+# Copy this file to sftp_sync_config.yml and fill in real values.
+# sftp_sync_config.yml should NOT be committed if it contains credentials.
+
+hosts:
+  - host: <hostname> 
+    port: <port>
+    username: <username> 
+    password: <password> 
+    folders:
+      - remote: /uploads/WAVE_monthly_update 
+        local: ./data
+      - remote: /uploads/WAVE_monthly_history 
+        local: ./data
+
